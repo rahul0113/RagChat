@@ -1,11 +1,59 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
-import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  late TextEditingController _urlCtrl;
+  late TextEditingController _apiKeyCtrl;
+  late TextEditingController _nameCtrl;
+  late TextEditingController _emailCtrl;
+  bool _darkMode = true;
+  Color _accentColor = AppTheme.primary;
+  bool _editingProfile = false;
+  bool _editingApi = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final api = context.read<ApiService>();
+    _urlCtrl = TextEditingController(text: api.baseUrl);
+    _apiKeyCtrl = TextEditingController(text: '');
+    _nameCtrl = TextEditingController(text: 'Admin User');
+    _emailCtrl = TextEditingController(text: 'admin@ragchat.com');
+  }
+
+  @override
+  void dispose() {
+    _urlCtrl.dispose();
+    _apiKeyCtrl.dispose();
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    super.dispose();
+  }
+
+  void _saveApiConfig() {
+    final api = context.read<ApiService>();
+    api.configure(baseUrl: _urlCtrl.text.trim(), apiKey: _apiKeyCtrl.text.trim());
+    setState(() => _editingApi = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('API configuration saved'), backgroundColor: AppTheme.success),
+    );
+  }
+
+  void _saveProfile() {
+    setState(() => _editingProfile = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Profile updated'), backgroundColor: AppTheme.success),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,61 +66,200 @@ class SettingsScreen extends StatelessWidget {
           const Text('Settings', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
           const SizedBox(height: 24),
 
-          // Profile
+          // Profile Section
           _section('Profile', [
             Row(
               children: [
                 Container(
-                  width: 48, height: 48,
+                  width: 56, height: 56,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(colors: [AppTheme.primary, Color(0xFF8B5CF6)]),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Center(child: Text('AD', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white))),
+                  child: Center(
+                    child: Text(
+                      _nameCtrl.text.isNotEmpty ? _nameCtrl.text.substring(0, 2).toUpperCase() : 'AD',
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white),
+                    ),
+                  ),
                 ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_nameCtrl.text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                      Text(_emailCtrl.text, style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                    ],
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () => setState(() => _editingProfile = !_editingProfile),
+                  icon: Icon(_editingProfile ? Icons.close_rounded : Icons.edit_rounded, size: 16),
+                  label: Text(_editingProfile ? 'Cancel' : 'Edit'),
+                ),
+              ],
+            ),
+            if (_editingProfile) ...[
+              const SizedBox(height: 16),
+              TextField(
+                controller: _nameCtrl,
+                decoration: const InputDecoration(labelText: 'Name'),
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _emailCtrl,
+                decoration: const InputDecoration(labelText: 'Email'),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _saveProfile,
+                  child: const Text('Save Profile'),
+                ),
+              ),
+            ],
+          ]),
+          const SizedBox(height: 16),
+
+          // API Configuration Section
+          _section('API Configuration', [
+            if (!_editingApi) ...[
+              _infoRow(Icons.language_rounded, 'API Base URL', api.baseUrl),
+              const SizedBox(height: 12),
+              _infoRow(Icons.key_rounded, 'API Key', api.isConfigured ? 'Configured' : 'Not Set'),
+              const SizedBox(height: 12),
+              _infoRow(Icons.vpn_key_rounded, 'Groq API Key', 'Set in .env on server'),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => setState(() => _editingApi = true),
+                  icon: const Icon(Icons.edit_rounded, size: 16),
+                  label: const Text('Configure'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primary,
+                    side: const BorderSide(color: AppTheme.primary),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ] else ...[
+              TextField(
+                controller: _urlCtrl,
+                decoration: const InputDecoration(labelText: 'API Base URL', hintText: 'http://localhost:8000/api'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _apiKeyCtrl,
+                decoration: const InputDecoration(labelText: 'API Key', hintText: 'rc_...'),
+                obscureText: true,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => setState(() => _editingApi = false),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _saveApiConfig,
+                      child: const Text('Save'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ]),
+          const SizedBox(height: 16),
+
+          // Appearance Section
+          _section('Appearance', [
+            // Dark Mode Toggle
+            Row(
+              children: [
+                const Icon(Icons.dark_mode_rounded, size: 20, color: AppTheme.textSecondary),
                 const SizedBox(width: 12),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Admin User', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
-                    Text('admin@ragchat.com', style: TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
-                  ],
+                const Expanded(child: Text('Dark Mode', style: TextStyle(fontSize: 14, color: AppTheme.textPrimary))),
+                Switch(
+                  value: _darkMode,
+                  onChanged: (v) => setState(() => _darkMode = v),
+                  activeColor: AppTheme.primary,
                 ),
+              ],
+            ),
+            const Divider(color: AppTheme.border, height: 24),
+            // Accent Color
+            const Row(
+              children: [
+                Icon(Icons.palette_rounded, size: 20, color: AppTheme.textSecondary),
+                SizedBox(width: 12),
+                Text('Accent Color', style: TextStyle(fontSize: 14, color: AppTheme.textPrimary)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _colorOption(AppTheme.primary),
+                _colorOption(const Color(0xFF8B5CF6)),
+                _colorOption(const Color(0xFF3B82F6)),
+                _colorOption(const Color(0xFF22C55E)),
+                _colorOption(const Color(0xFFF59E0B)),
+                _colorOption(const Color(0xFFEC4899)),
+                _colorOption(const Color(0xFF14B8A6)),
+                _colorOption(const Color(0xFFEF4444)),
               ],
             ),
           ]),
           const SizedBox(height: 16),
 
-          // API Configuration — REAL data from service
-          _section('API Configuration', [
-            _settingField('API Base URL', api.baseUrl, Icons.language_rounded),
-            const SizedBox(height: 12),
-            _settingField('API Key', api.isConfigured ? 'Configured' : 'Not Set', Icons.key_rounded),
-            const SizedBox(height: 12),
-            _settingField('Groq API Key', 'Set in .env file on server', Icons.vpn_key_rounded),
-          ]),
-          const SizedBox(height: 16),
-
-          // Appearance
-          _section('Appearance', [
-            _toggleRow('Dark Mode', true, Icons.dark_mode_rounded),
-            const SizedBox(height: 12),
-            _colorRow('Accent Color'),
-          ]),
-          const SizedBox(height: 16),
-
-          // About
+          // About Section
           _section('About', [
-            _infoRow('Version', '1.0.0'),
+            _infoRow(Icons.info_outline_rounded, 'Version', '1.0.0'),
             const Divider(color: AppTheme.border, height: 20),
-            _infoRow('API Docs', '${api.baseUrl}/docs', icon: Icons.open_in_new_rounded),
+            InkWell(
+              onTap: () {},
+              child: _infoRow(Icons.open_in_new_rounded, 'API Docs', '${api.baseUrl}/docs'),
+            ),
+            const Divider(color: AppTheme.border, height: 20),
+            _infoRow(Icons.code_rounded, 'Source', 'github.com/rahul0113/RagChat'),
           ]),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
 
           // Logout
           InkWell(
-            onTap: () async {
-              await context.read<AuthService>().logout();
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  backgroundColor: AppTheme.surface,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  title: const Text('Logout', style: TextStyle(color: AppTheme.textPrimary)),
+                  content: const Text('Are you sure you want to logout?', style: TextStyle(color: AppTheme.textSecondary)),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Logged out'), backgroundColor: AppTheme.info),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
+                      child: const Text('Logout'),
+                    ),
+                  ],
+                ),
+              );
             },
             borderRadius: BorderRadius.circular(12),
             child: Container(
@@ -117,62 +304,41 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _settingField(String label, String value, IconData icon, {bool isMasked = false}) {
+  Widget _infoRow(IconData icon, String label, String value) {
     return Row(
       children: [
         Icon(icon, size: 18, color: AppTheme.textSecondary),
         const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-              Text(value, style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary)),
-            ],
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+            Text(value, style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _colorOption(Color color) {
+    final isSelected = _accentColor.value == color.value;
+    return GestureDetector(
+      onTap: () => setState(() => _accentColor = color),
+      child: Container(
+        width: 36, height: 36,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isSelected ? Colors.white : Colors.transparent,
+            width: 3,
           ),
+          boxShadow: isSelected ? [
+            BoxShadow(color: color.withOpacity(0.5), blurRadius: 8, spreadRadius: 2),
+          ] : null,
         ),
-      ],
-    );
-  }
-
-  Widget _toggleRow(String label, bool value, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: AppTheme.textSecondary),
-        const SizedBox(width: 12),
-        Text(label, style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary)),
-        const Spacer(),
-        Switch(value: value, onChanged: (_) {}, activeColor: AppTheme.primary),
-      ],
-    );
-  }
-
-  Widget _colorRow(String label) {
-    return Row(
-      children: [
-        const Icon(Icons.palette_rounded, size: 18, color: AppTheme.textSecondary),
-        const SizedBox(width: 12),
-        Text(label, style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary)),
-        const Spacer(),
-        Container(
-          width: 28, height: 28,
-          decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
-        ),
-      ],
-    );
-  }
-
-  Widget _infoRow(String label, String value, {IconData? icon}) {
-    return Row(
-      children: [
-        Text(label, style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary)),
-        const Spacer(),
-        if (value.isNotEmpty) Text(value, style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
-        if (icon != null) Padding(
-          padding: const EdgeInsets.only(left: 4),
-          child: Icon(icon, size: 16, color: AppTheme.textSecondary),
-        ),
-      ],
+        child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 18) : null,
+      ),
     );
   }
 }

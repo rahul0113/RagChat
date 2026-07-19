@@ -5,11 +5,13 @@ import '../theme/app_theme.dart';
 class TenantCard extends StatelessWidget {
   final Tenant tenant;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   const TenantCard({
     super.key,
     required this.tenant,
     this.onTap,
+    this.onLongPress,
   });
 
   Color get _planColor {
@@ -22,9 +24,9 @@ class TenantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      onLongPress: onLongPress,
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -38,8 +40,7 @@ class TenantCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 44, height: 44,
                   decoration: BoxDecoration(
                     color: AppTheme.primary.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(12),
@@ -47,11 +48,7 @@ class TenantCard extends StatelessWidget {
                   child: Center(
                     child: Text(
                       tenant.name.isNotEmpty ? tenant.name[0].toUpperCase() : '?',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.primary,
-                      ),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.primary),
                     ),
                   ),
                 ),
@@ -60,23 +57,8 @@ class TenantCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        tenant.name,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        tenant.orgName,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.textSecondary,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      Text(tenant.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppTheme.textPrimary), overflow: TextOverflow.ellipsis),
+                      Text(tenant.orgName, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary), overflow: TextOverflow.ellipsis),
                     ],
                   ),
                 ),
@@ -86,15 +68,10 @@ class TenantCard extends StatelessWidget {
                     color: _planColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
-                    tenant.plan.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: _planColor,
-                    ),
-                  ),
+                  child: Text(tenant.plan.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _planColor)),
                 ),
+                const SizedBox(width: 8),
+                const Icon(Icons.chevron_right_rounded, size: 20, color: AppTheme.textSecondary),
               ],
             ),
             const SizedBox(height: 16),

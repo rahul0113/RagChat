@@ -24,14 +24,20 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 
   Future<void> _loadData() async {
-    final api = context.read<ApiService>();
-    final summary = await api.getAnalyticsSummary();
-    final queries = await api.getTopQueries(limit: 20);
-    setState(() {
-      _summary = summary;
-      _topQueries = queries;
-      _loading = false;
-    });
+    try {
+      final api = context.read<ApiService>();
+      final summary = await api.getAnalyticsSummary();
+      final queries = await api.getTopQueries(limit: 20);
+      if (mounted) {
+        setState(() {
+          _summary = summary;
+          _topQueries = queries;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -47,10 +53,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Analytics', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-              IconButton(
-                onPressed: _loadData,
-                icon: const Icon(Icons.refresh_rounded, color: AppTheme.textSecondary),
-              ),
+              IconButton(onPressed: _loadData, icon: const Icon(Icons.refresh_rounded, color: AppTheme.textSecondary)),
             ],
           ),
           const SizedBox(height: 24),
@@ -58,14 +61,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           if (_loading)
             const Center(child: CircularProgressIndicator(color: AppTheme.primary))
           else ...[
-            // Stats from API
+            // Stats cards with consistent padding
             Row(
               children: [
-                _statCard('${_summary['total_queries'] ?? 0}', 'Total Queries', '+${_summary['today'] ?? 0} today', AppTheme.primary),
+                Expanded(child: _statCard('${_summary['total_queries'] ?? 0}', 'Total Queries', '+${_summary['today'] ?? 0} today', AppTheme.primary)),
                 const SizedBox(width: 12),
-                _statCard('${_summary['this_week'] ?? 0}', 'This Week', 'Active growth', AppTheme.info),
+                Expanded(child: _statCard('${_summary['this_week'] ?? 0}', 'This Week', 'Active growth', AppTheme.info)),
                 const SizedBox(width: 12),
-                _statCard('${_summary['total_tenants'] ?? 0}', 'Tenants', '${_summary['total_documents'] ?? 0} docs', AppTheme.success),
+                Expanded(child: _statCard('${_summary['total_tenants'] ?? 0}', 'Tenants', '${_summary['total_documents'] ?? 0} docs', AppTheme.success)),
               ],
             ),
             const SizedBox(height: 24),
@@ -81,10 +84,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               ),
               child: Center(
                 child: _topQueries.isEmpty
-                    ? const Text('No query data yet. Start chatting to see trends.',
-                        style: TextStyle(color: AppTheme.textSecondary))
-                    : const Text('Query Trend Chart (fl_chart integration)',
-                        style: TextStyle(color: AppTheme.textSecondary)),
+                    ? const Text('No query data yet. Start chatting to see trends.', style: TextStyle(color: AppTheme.textSecondary))
+                    : const Text('Query Trend Chart (fl_chart integration)', style: TextStyle(color: AppTheme.textSecondary)),
               ),
             ),
             const SizedBox(height: 24),
@@ -93,73 +94,49 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Top Queries (${_topQueries.length})',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                Text('Top Queries (${_topQueries.length})', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
                 if (_topQueries.length > 5)
                   TextButton(
                     onPressed: () => setState(() => _showAll = !_showAll),
-                    child: Text(_showAll ? 'Show Less' : 'View All',
-                        style: const TextStyle(color: AppTheme.primary, fontSize: 13)),
+                    child: Text(_showAll ? 'Show Less' : 'View All', style: const TextStyle(color: AppTheme.primary, fontSize: 13)),
                   ),
               ],
             ),
             const SizedBox(height: 12),
 
-            // Query list from API
+            // Query list
             Expanded(
               child: _topQueries.isEmpty
                   ? Container(
-                      decoration: BoxDecoration(
-                        color: AppTheme.card,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppTheme.border),
-                      ),
-                      child: const Center(
-                        child: Text('No queries recorded yet.', style: TextStyle(color: AppTheme.textSecondary)),
-                      ),
+                      decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.border)),
+                      child: const Center(child: Text('No queries recorded yet.', style: TextStyle(color: AppTheme.textSecondary))),
                     )
                   : Container(
-                      decoration: BoxDecoration(
-                        color: AppTheme.card,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppTheme.border),
-                      ),
+                      decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.border)),
                       child: ListView.separated(
                         padding: const EdgeInsets.all(12),
                         itemCount: visible.length,
                         separatorBuilder: (_, __) => const Divider(color: AppTheme.border, height: 1),
                         itemBuilder: (ctx, i) {
                           final q = visible[i];
-                          final question = q['question'] ?? '';
-                          final uses = q['uses'] ?? 0;
-                          final lastAsked = q['last_asked'] ?? '';
                           return ListTile(
                             onTap: () => Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder: (_) => QueryDetailScreen(
-                                  rank: i + 1,
-                                  question: question,
-                                  uses: '$uses uses',
-                                ),
-                              ),
+                              MaterialPageRoute(builder: (_) => QueryDetailScreen(rank: i + 1, question: q['question'] ?? '', uses: '${q['uses'] ?? 0} uses')),
                             ),
                             leading: Container(
                               width: 32, height: 32,
-                              decoration: BoxDecoration(
-                                color: AppTheme.primary.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Center(
-                                child: Text('${i + 1}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.primary)),
-                              ),
+                              decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
+                              child: Center(child: Text('${i + 1}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.primary))),
                             ),
-                            title: Text(question, style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary)),
-                            subtitle: lastAsked.isNotEmpty ? Text('Last: $lastAsked', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)) : null,
+                            title: Text(q['question'] ?? '', style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary)),
+                            subtitle: (q['last_asked'] ?? '').toString().isNotEmpty
+                                ? Text('Last: ${q['last_asked']}', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary))
+                                : null,
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('$uses uses', style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                                Text('${q['uses'] ?? 0} uses', style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
                                 const SizedBox(width: 4),
                                 const Icon(Icons.chevron_right_rounded, size: 18, color: AppTheme.textSecondary),
                               ],
@@ -176,23 +153,22 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 
   Widget _statCard(String value, String label, String subtitle, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: color)),
-            const SizedBox(height: 4),
-            Text(label, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-            Text(subtitle, style: TextStyle(fontSize: 11, color: color.withOpacity(0.7))),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(value, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: color)),
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+          const SizedBox(height: 2),
+          Text(subtitle, style: TextStyle(fontSize: 11, color: color.withOpacity(0.7))),
+        ],
       ),
     );
   }
