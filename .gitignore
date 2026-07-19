@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.env
+*.db
+uploads/
+venv/
+.venv/
+
+# Flutter
+admin/.dart_tool/
+admin/.packages
+admin/build/
+admin/.flutter-plugins
+admin/.flutter-plugins-dependencies
+admin/pubspec.lock
+admin/.metadata
+admin/android/
+admin/ios/
+admin/linux/
+admin/macos/
+admin/windows/
+
+# IDE
+.vscode/
+.idea/
+*.iml

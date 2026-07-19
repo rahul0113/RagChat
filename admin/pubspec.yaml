@@ -1,0 +1,48 @@
+name: ragchat_admin
+description: RagChat Admin Dashboard - Cross-platform tenant & knowledge base management
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # HTTP & API
+  http: ^1.2.2
+  dio: ^5.7.0
+
+  # State Management
+  provider: ^6.1.2
+
+  # UI Components
+  flutter_animate: ^4.5.2
+  google_fonts: ^6.2.1
+  glassmorphism: ^3.0.0
+  fl_chart: ^0.69.2
+  flutter_staggered_animations: ^1.1.1
+
+  # File handling
+  file_picker: ^8.1.7
+  universal_html: ^2.2.4
+
+  # Utilities
+  intl: ^0.19.0
+  url_launcher: ^6.3.1
+  shared_preferences: ^2.3.3
+  responsive_framework: ^1.5.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/

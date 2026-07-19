@@ -1,0 +1,90 @@
+name: Build Flutter Admin
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'admin/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'admin/**'
+
+jobs:
+  build-web:
+    name: Build Web
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Web
+        run: flutter build web --release
+
+      - name: Upload Web Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ragchat-admin-web
+          path: admin/build/web/
+
+  build-apk:
+    name: Build APK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK (debug)
+        run: flutter build apk --debug
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ragchat-admin-debug-apk
+          path: admin/build/app/outputs/flutter-apk/app-debug.apk
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [build-web, build-apk]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Build ${{ github.run_number }}
+          body: |
+            ## RagChat Admin Dashboard
+
+            ### Downloads
+            - **APK**: Download `ragchat-admin-debug-apk` artifact
+            - **Web**: Download `ragchat-admin-web` artifact, serve with any static server
+          files: |
+            ragchat-admin-debug-apk/app-debug.apk
+          draft: false
+          prerelease: false
