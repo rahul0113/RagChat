@@ -26,3 +26,4 @@ admin/build/
 .vscode/
 .idea/
 *.iml
+admin/web-output/
