@@ -49,7 +49,7 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 12),
             _settingField('API Key', api.isConfigured ? 'Configured' : 'Not Set', Icons.key_rounded),
             const SizedBox(height: 12),
-            const _settingField('Groq API Key', 'Set in .env file on server', Icons.vpn_key_rounded),
+            _settingField('Groq API Key', 'Set in .env file on server', Icons.vpn_key_rounded),
           ]),
           const SizedBox(height: 16),
 
@@ -63,7 +63,7 @@ class SettingsScreen extends StatelessWidget {
 
           // About
           _section('About', [
-            const _infoRow('Version', '1.0.0'),
+            _infoRow('Version', '1.0.0'),
             const Divider(color: AppTheme.border, height: 20),
             _infoRow('API Docs', '${api.baseUrl}/docs', icon: Icons.open_in_new_rounded),
           ]),
