@@ -54,6 +54,10 @@ jobs:
       - name: Generate Android scaffolding
         run: flutter create --org com.ragchat . --platforms android
 
+      - name: Fix Kotlin version
+        run: |
+          sed -i 's/id("org.jetbrains.kotlin.android") version ".*"/id("org.jetbrains.kotlin.android") version "2.1.0"/' android/settings.gradle
+
       - name: Build APK (debug)
         run: flutter build apk --debug
 
