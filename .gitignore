@@ -16,11 +16,11 @@ admin/.flutter-plugins
 admin/.flutter-plugins-dependencies
 admin/pubspec.lock
 admin/.metadata
-admin/android/
 admin/ios/
 admin/linux/
 admin/macos/
 admin/windows/
+admin/build/
 
 # IDE
 .vscode/
