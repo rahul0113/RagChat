@@ -1,0 +1,12 @@
+{
+  "name": "RagChat Admin",
+  "short_name": "RagChat",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0F0D1A",
+  "theme_color": "#6366F1",
+  "description": "RagChat Admin Dashboard",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "icons": []
+}

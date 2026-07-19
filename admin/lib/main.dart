@@ -11,6 +11,7 @@ import 'screens/tenant_detail_screen.dart';
 import 'screens/documents_screen.dart';
 import 'screens/analytics_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/landing_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/sidebar.dart';
 
@@ -41,7 +42,7 @@ class RagChatAdmin extends StatelessWidget {
             Breakpoint(start: 1921, end: 3840, name: '4K'),
           ],
         ),
-        home: const AdminShell(),
+        home: const LandingScreen(),
       ),
     );
   }
