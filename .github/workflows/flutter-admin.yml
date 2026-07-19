@@ -69,6 +69,20 @@ jobs:
       - name: Generate Android scaffolding
         run: flutter create --org com.ragchat . --platforms android
 
+      - name: Fix Kotlin and Gradle versions
+        run: |
+          # Update Kotlin version in settings.gradle (new plugin format)
+          sed -i 's/id("org.jetbrains.kotlin.android") version ".*"/id("org.jetbrains.kotlin.android") version "2.1.0"/' android/settings.gradle
+          # Update AGP version
+          sed -i 's/id("com.android.application") version ".*"/id("com.android.application") version "8.1.0"/' android/settings.gradle
+          # Update gradle-wrapper to 8.4
+          sed -i 's/gradle-[0-9.]*-bin.zip/gradle-8.4-bin.zip/' android/gradle/wrapper/gradle-wrapper.properties
+          # Print settings.gradle for debugging
+          echo "=== settings.gradle ==="
+          cat android/settings.gradle
+          echo "=== gradle-wrapper.properties ==="
+          cat android/gradle/wrapper/gradle-wrapper.properties
+
       - name: Build APK (debug)
         run: flutter build apk --debug
 
