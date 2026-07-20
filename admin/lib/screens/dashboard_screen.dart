@@ -128,6 +128,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   onChanged: (v) => setDialogState(() => selectedTenant = v),
                 ),
                 const SizedBox(height: 16),
+                // File picker area
                 InkWell(
                   onTap: () async {
                     final result = await FilePicker.platform.pickFiles();
@@ -141,17 +142,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(32),
+                    padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
                     decoration: BoxDecoration(
                       color: AppTheme.primary.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.primary.withOpacity(0.3), style: BorderStyle.solid),
+                      border: Border.all(color: AppTheme.primary.withOpacity(0.3), width: 1.5),
                     ),
                     child: Column(
                       children: [
-                        Icon(Icons.cloud_upload_rounded, size: 48, color: AppTheme.primary.withOpacity(0.6)),
+                        Container(
+                          width: 56, height: 56,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(Icons.cloud_upload_rounded, size: 30, color: AppTheme.primary.withOpacity(0.7)),
+                        ),
                         const SizedBox(height: 12),
-                        const Text('Tap to select file', style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w500)),
+                        const Text('Tap to select file', style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w500, fontSize: 14)),
                         const SizedBox(height: 4),
                         Text('PDF, DOCX, TXT, HTML, CSV, MD, JSON', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary.withOpacity(0.7))),
                       ],

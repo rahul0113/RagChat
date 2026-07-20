@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
+import '../widgets/stat_card.dart';
 import '../theme/app_theme.dart';
 import 'query_detail_screen.dart';
 
@@ -61,14 +62,38 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           if (_loading)
             const Center(child: CircularProgressIndicator(color: AppTheme.primary))
           else ...[
-            // Stats cards with consistent padding
+            // Stats — using same StatCard widget as Dashboard for consistency
             Row(
               children: [
-                Expanded(child: _statCard('${_summary['total_queries'] ?? 0}', 'Total Queries', '+${_summary['today'] ?? 0} today', AppTheme.primary)),
-                const SizedBox(width: 12),
-                Expanded(child: _statCard('${_summary['this_week'] ?? 0}', 'This Week', 'Active growth', AppTheme.info)),
-                const SizedBox(width: 12),
-                Expanded(child: _statCard('${_summary['total_tenants'] ?? 0}', 'Tenants', '${_summary['total_documents'] ?? 0} docs', AppTheme.success)),
+                Expanded(
+                  child: StatCard(
+                    title: 'Total Queries',
+                    value: '${_summary['total_queries'] ?? 0}',
+                    icon: Icons.chat_bubble_rounded,
+                    accentColor: AppTheme.primary,
+                    subtitle: '+${_summary['today'] ?? 0} today',
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: StatCard(
+                    title: 'This Week',
+                    value: '${_summary['this_week'] ?? 0}',
+                    icon: Icons.trending_up_rounded,
+                    accentColor: AppTheme.info,
+                    subtitle: 'Active growth',
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: StatCard(
+                    title: 'Tenants',
+                    value: '${_summary['total_tenants'] ?? 0}',
+                    icon: Icons.apartment_rounded,
+                    accentColor: AppTheme.success,
+                    subtitle: '${_summary['total_documents'] ?? 0} docs',
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 24),
@@ -147,27 +172,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     ),
             ),
           ],
-        ],
-      ),
-    );
-  }
-
-  Widget _statCard(String value, String label, String subtitle, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(value, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: color)),
-          const SizedBox(height: 4),
-          Text(label, style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
-          const SizedBox(height: 2),
-          Text(subtitle, style: TextStyle(fontSize: 11, color: color.withOpacity(0.7))),
         ],
       ),
     );
