@@ -3,8 +3,11 @@ Tenant management operations.
 """
 import secrets
 import json
+import logging
 from tenants.models import Tenant, QueryLog, SessionLocal, DEFAULT_THEMES
-from rag.vector_store import create_tenant_collection, delete_tenant_collection, get_tenant_stats
+from rag.vector_store import delete_tenant_collection
+
+logger = logging.getLogger(__name__)
 
 
 def generate_api_key() -> str:
@@ -34,15 +37,24 @@ def create_tenant(name: str, slug: str, org_name: str, plan: str = "free",
         db.add(tenant)
         db.commit()
         db.refresh(tenant)
+        logger.info(f"Tenant created in DB: {tenant.id} ({tenant.slug})")
 
         # Create Qdrant collection (non-fatal — tenant is created even if Qdrant is down)
         try:
+            from rag.vector_store import create_tenant_collection
             create_tenant_collection(tenant.id)
+            logger.info(f"Qdrant collection created for {tenant.id}")
         except Exception as e:
-            import logging
-            logging.getLogger(__name__).warning(f"Qdrant collection create failed for {tenant.id}: {e}")
+            logger.warning(f"Qdrant collection create failed for {tenant.id}: {e}")
 
-        return {
+        # Build response (safe — catch any serialization issues)
+        try:
+            embed_code = _embed_code(tenant)
+        except Exception as e:
+            logger.warning(f"Embed code generation failed: {e}")
+            embed_code = ""
+
+        result = {
             "id": tenant.id,
             "name": tenant.name,
             "slug": tenant.slug,
@@ -50,8 +62,15 @@ def create_tenant(name: str, slug: str, org_name: str, plan: str = "free",
             "api_key": tenant.api_key,
             "plan": tenant.plan,
             "theme": theme,
-            "embed_code": _embed_code(tenant),
+            "embed_code": embed_code,
         }
+        logger.info(f"Tenant response built successfully for {tenant.id}")
+        return result
+    except ValueError:
+        raise
+    except Exception as e:
+        logger.error(f"create_tenant failed: {type(e).__name__}: {e}", exc_info=True)
+        raise
     finally:
         db.close()
 
