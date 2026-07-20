@@ -235,16 +235,10 @@ def get_analytics_summary() -> dict:
 
 def _embed_code(tenant: Tenant) -> str:
     """Generate the embed code for a client to paste on their website."""
+    from config import get_settings
+    settings = get_settings()
+    backend_url = settings.BACKEND_URL or ""
     return f"""<!-- RagChat Widget - {tenant.name} -->
-<script>
-  (function() {{
-    var s = document.createElement('script');
-    s.src = '/widget/static/widget.js';
-    s.dataset.tenantId = '{tenant.id}';
-    s.dataset.tenantSlug = '{tenant.slug}';
-    document.body.appendChild(s);
-  }})();
-</script>"""
-
-
-import json  # needed for theme serialization
+<script src="{backend_url}/widget/static/widget.js"
+  data-tenant-id="{tenant.id}"
+  data-tenant-slug="{tenant.slug}"></script>"""

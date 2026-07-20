@@ -220,7 +220,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           const SizedBox(height: 10),
                           Text('You need two things:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: textColor)),
                           const SizedBox(height: 4),
-                          _helpStep('1', 'Backend URL', 'Where your FastAPI server is running (e.g. http://localhost:8000/api)', textColor, subtextColor),
+                          _helpStep('1', 'Backend URL', 'Paste your deployed backend URL (e.g. https://your-app.hf.space/api)', textColor, subtextColor),
                           const SizedBox(height: 4),
                           _helpStep('2', 'API Key (optional)', 'Only if you enabled authentication on the backend', textColor, subtextColor),
                         ],

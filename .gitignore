@@ -14,7 +14,7 @@ admin/.packages
 admin/build/
 admin/.flutter-plugins
 admin/.flutter-plugins-dependencies
-admin/pubspec.lock
+# pubspec.lock intentionally tracked for reproducible builds
 admin/.metadata
 admin/ios/
 admin/linux/
