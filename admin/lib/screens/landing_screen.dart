@@ -16,6 +16,7 @@ class _LandingScreenState extends State<LandingScreen> with TickerProviderStateM
   late Animation<Offset> _slideAnim1;
   late Animation<Offset> _slideAnim2;
   late Animation<Offset> _slideAnim3;
+  final PageController _pageController = PageController();
   int _currentPage = 0;
 
   @override
@@ -37,7 +38,15 @@ class _LandingScreenState extends State<LandingScreen> with TickerProviderStateM
   void dispose() {
     _fadeController.dispose();
     _slideController.dispose();
+    _pageController.dispose();
     super.dispose();
+  }
+
+  void _navigateToApp() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const AdminShell()),
+    );
   }
 
   @override
@@ -51,7 +60,7 @@ class _LandingScreenState extends State<LandingScreen> with TickerProviderStateM
             children: [
               const Spacer(flex: 1),
 
-              // Logo
+              // Logo — matches sidebar icon
               SlideTransition(
                 position: _slideAnim1,
                 child: Container(
@@ -64,7 +73,7 @@ class _LandingScreenState extends State<LandingScreen> with TickerProviderStateM
                       BoxShadow(color: AppTheme.primary.withOpacity(0.3), blurRadius: 24, spreadRadius: 4),
                     ],
                   ),
-                  child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 40),
+                  child: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 40),
                 ),
               ),
               const SizedBox(height: 32),
@@ -89,45 +98,45 @@ class _LandingScreenState extends State<LandingScreen> with TickerProviderStateM
                   child: const Text('AI-Powered Knowledge Base', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppTheme.primary)),
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
 
-              // Tagline
-              SlideTransition(
-                position: _slideAnim2,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Text(
-                    'Your own AI assistant that knows your business.\nOne line of code, no technical skill needed.\nUpload your documents, and it\'s super patient.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, color: AppTheme.textSecondary.withOpacity(0.9), height: 1.6),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 48),
-
-              // Feature cards
-              SlideTransition(
-                position: _slideAnim3,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Row(
+              // Swipeable onboarding pages
+              Expanded(
+                flex: 3,
+                child: SlideTransition(
+                  position: _slideAnim3,
+                  child: PageView(
+                    controller: _pageController,
+                    onPageChanged: (i) => setState(() => _currentPage = i),
                     children: [
-                      _featureCard(Icons.upload_file_rounded, 'Upload', 'PDF, DOCX,\nTXT, HTML', AppTheme.success),
-                      const SizedBox(width: 12),
-                      _featureCard(Icons.auto_awesome_rounded, 'AI Answers', 'Instant &\nAccurate', AppTheme.primary),
-                      const SizedBox(width: 12),
-                      _featureCard(Icons.public_rounded, 'Embed', 'One line\nof code', AppTheme.info),
+                      _onboardingPage(
+                        icon: Icons.upload_file_rounded,
+                        title: 'Upload Documents',
+                        description: 'Drop in your PDFs, DOCX, TXT, HTML, CSV files.\nWe handle the rest automatically.',
+                        color: AppTheme.success,
+                      ),
+                      _onboardingPage(
+                        icon: Icons.auto_awesome_rounded,
+                        title: 'AI Finds Answers',
+                        description: 'Your users ask questions.\nThe AI searches your docs and responds instantly.',
+                        color: AppTheme.primary,
+                      ),
+                      _onboardingPage(
+                        icon: Icons.public_rounded,
+                        title: 'Embed Anywhere',
+                        description: 'One line of code on any website.\nNo technical skills needed.',
+                        color: AppTheme.info,
+                      ),
                     ],
                   ),
                 ),
               ),
 
-              const Spacer(flex: 2),
-
-              // Page indicator
+              // Page indicator dots
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(3, (i) => Container(
+                children: List.generate(3, (i) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
                   width: i == _currentPage ? 24 : 8,
                   height: 8,
                   margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -139,7 +148,7 @@ class _LandingScreenState extends State<LandingScreen> with TickerProviderStateM
               ),
               const SizedBox(height: 32),
 
-              // Get Started button
+              // Get Started / Next button
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: SizedBox(
@@ -147,30 +156,32 @@ class _LandingScreenState extends State<LandingScreen> with TickerProviderStateM
                   height: 56,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => const AdminShell()),
-                      );
+                      if (_currentPage < 2) {
+                        _pageController.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      } else {
+                        _navigateToApp();
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       elevation: 0,
                     ),
-                    child: const Text('Get Started', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                    child: Text(
+                      _currentPage < 2 ? 'Next' : 'Get Started',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               // Skip
               TextButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AdminShell()),
-                  );
-                },
+                onPressed: _navigateToApp,
                 child: Text('Skip for now', style: TextStyle(color: AppTheme.textSecondary.withOpacity(0.6), fontSize: 14)),
               ),
               const SizedBox(height: 24),
@@ -181,24 +192,30 @@ class _LandingScreenState extends State<LandingScreen> with TickerProviderStateM
     );
   }
 
-  Widget _featureCard(IconData icon, String title, String subtitle, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.2)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(height: 8),
-            Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color)),
-            const SizedBox(height: 4),
-            Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary, height: 1.3)),
-          ],
-        ),
+  Widget _onboardingPage({required IconData icon, required String title, required String description, required Color color}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(icon, color: color, size: 36),
+          ),
+          const SizedBox(height: 24),
+          Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+          const SizedBox(height: 12),
+          Text(
+            description,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 15, color: AppTheme.textSecondary.withOpacity(0.9), height: 1.5),
+          ),
+        ],
       ),
     );
   }
