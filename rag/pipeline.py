@@ -25,22 +25,24 @@ def ingest_document(tenant_id: str, file_obj, filename: str) -> dict:
     if not chunks:
         raise ValueError(f"No content extracted from '{filename}'.")
 
-    # 3. Ensure collection exists
-    create_tenant_collection(tenant_id)
+    # 3-5. Vector operations (Qdrant) — non-fatal if unreachable
+    vectors_stored = 0
+    try:
+        create_tenant_collection(tenant_id)
+        texts_to_embed = [c["text"] for c in chunks]
+        vectors = embed_texts(texts_to_embed)
+        metadatas = [{"source": c["source"], "chunk_index": c["chunk_index"]} for c in chunks]
+        insert_vectors(tenant_id, texts_to_embed, vectors, metadatas)
+        vectors_stored = len(chunks)
+    except Exception as e:
+        logger.warning(f"Vector storage failed for '{filename}' (Qdrant unreachable?): {e}")
 
-    # 4. Embed all chunks
-    texts_to_embed = [c["text"] for c in chunks]
-    vectors = embed_texts(texts_to_embed)
-
-    # 5. Store in Qdrant
-    metadatas = [{"source": c["source"], "chunk_index": c["chunk_index"]} for c in chunks]
-    insert_vectors(tenant_id, texts_to_embed, vectors, metadatas)
-
-    logger.info(f"Ingested '{filename}' into tenant '{tenant_id}': {len(chunks)} chunks.")
+    logger.info(f"Ingested '{filename}' into tenant '{tenant_id}': {len(chunks)} chunks, {vectors_stored} vectors stored.")
     return {
         "filename": filename,
         "chunks": len(chunks),
         "characters": len(text),
+        "vectors_stored": vectors_stored,
     }
 
 

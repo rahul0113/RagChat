@@ -23,8 +23,8 @@ class Settings(BaseSettings):
     GROQ_MAX_TOKENS: int = 2048
 
     # --- Embeddings (local, no API needed) ---
-    EMBEDDING_MODEL: str = "BAAI/bge-large-en-v1.5"
-    EMBEDDING_DIMENSION: int = 1024
+    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
+    EMBEDDING_DIMENSION: int = 384
     EMBEDDING_BATCH_SIZE: int = 32
 
     # --- Qdrant Vector DB ---
