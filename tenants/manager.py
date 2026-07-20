@@ -15,7 +15,7 @@ def generate_api_key() -> str:
 
 
 def create_tenant(name: str, slug: str, org_name: str, plan: str = "free",
-                   theme_name: str = "default") -> dict:
+                   theme_name: str = "default", backend_url: str = "") -> dict:
     """Create a new tenant with isolated collection."""
     db = SessionLocal()
     try:
@@ -49,7 +49,7 @@ def create_tenant(name: str, slug: str, org_name: str, plan: str = "free",
 
         # Build response (safe — catch any serialization issues)
         try:
-            embed_code = _embed_code(tenant)
+            embed_code = _embed_code(tenant, backend_url)
         except Exception as e:
             logger.warning(f"Embed code generation failed: {e}")
             embed_code = ""
@@ -256,11 +256,12 @@ def get_analytics_summary() -> dict:
         db.close()
 
 
-def _embed_code(tenant: Tenant) -> str:
+def _embed_code(tenant: Tenant, backend_url: str = "") -> str:
     """Generate the embed code for a client to paste on their website."""
-    from config import get_settings
-    settings = get_settings()
-    backend_url = settings.BACKEND_URL or ""
+    if not backend_url:
+        from config import get_settings
+        settings = get_settings()
+        backend_url = settings.BACKEND_URL or ""
     return f"""<!-- RagChat Widget - {tenant.name} -->
 <script src="{backend_url}/widget/static/widget.js"
   data-tenant-id="{tenant.id}"

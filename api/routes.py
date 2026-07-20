@@ -122,15 +122,17 @@ async def get_widget_config(slug: str):
 # TENANT MANAGEMENT (requires API key)
 # ============================================
 @router.post("/admin/tenants")
-async def admin_create_tenant(data: TenantCreate):
+async def admin_create_tenant(request: Request, data: TenantCreate):
     """Create a new tenant."""
     try:
+        backend_url = str(request.base_url).rstrip("/")
         result = create_tenant(
             name=data.name,
             slug=data.slug,
             org_name=data.org_name,
             plan=data.plan,
             theme_name=data.theme_name,
+            backend_url=backend_url,
         )
         return result
     except ValueError as e:
