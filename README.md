@@ -1,11 +1,3 @@
----
-title: RagChat
-emoji: 🤖
-colorFrom: purple
-colorTo: blue
-sdk: docker
-pinned: false
----
 
 # RagChat
 
@@ -128,25 +120,34 @@ RagChat/
     └── flutter-admin.yml
 ```
 
-## Deploy to Hugging Face Spaces
+## Deploy to Koyeb (Free, No Sleep)
 
-1. Push this repo to GitHub
-2. Go to https://huggingface.co/new-space
-3. Select **Docker** as the SDK
-4. Import from your GitHub repo
-5. Add these **Secrets** in Space Settings → Variables and Secrets:
-   - `GROQ_API_KEY` = your Groq API key
+### Prerequisites
+1. GitHub account with this repo
+2. Qdrant Cloud account (free 1 GB) — https://cloud.qdrant.io
+3. Groq API key (free) — https://console.groq.com
+
+### Steps
+1. Go to https://www.koyeb.com → Sign up with GitHub
+2. Click **Create App** → **Git**
+3. Select your `RagChat` repo
+4. Configure:
+   - **Name**: `ragchat`
+   - **Port**: `7860`
+   - **Instance**: Nano (free)
+5. Add **Environment Variables**:
+   - `GROQ_API_KEY` = your Groq key
    - `QDRANT_HOST` = your Qdrant Cloud cluster URL
    - `QDRANT_PORT` = 6333
    - `QDRANT_API_KEY` = your Qdrant Cloud API key
-   - `BACKEND_URL` = https://your-username-ragchat.hf.space
-6. The Space will auto-build and deploy
+   - `BACKEND_URL` = `https://ragchat-app.koyeb.app` (your Koyeb URL)
+6. Click **Deploy**
+7. Your app is live at `https://ragchat-app.koyeb.app`
 
-## Connect Flutter Admin to Backend
-
+### Connect Flutter Admin
 In the app, go to Settings → API Configuration and paste:
 ```
-https://your-username-ragchat.hf.space/api
+https://ragchat-app.koyeb.app/api
 ```
 
 ## License

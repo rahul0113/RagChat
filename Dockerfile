@@ -21,8 +21,8 @@ COPY widget/ ./widget/
 # Create uploads directory
 RUN mkdir -p uploads
 
-# Expose port (HF Spaces uses 7860)
-EXPOSE 7860
+# Koyeb auto-assigns PORT env var
+ENV PORT=7860
+EXPOSE $PORT
 
-# Run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD sh -c "uvicorn main:app --host 0.0.0.0 --port $PORT"
