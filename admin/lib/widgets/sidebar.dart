@@ -31,9 +31,9 @@ class Sidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 260,
-      decoration: const BoxDecoration(
-        color: AppTheme.surface,
-        border: Border(right: BorderSide(color: AppTheme.border)),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceContainerLow,
+        border: const Border(right: BorderSide(color: AppTheme.border, width: 1)),
       ),
       child: Column(
         children: [
@@ -47,12 +47,14 @@ class Sidebar extends StatelessWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [AppTheme.primary, Color(0xFF8B5CF6)],
+                      colors: [AppTheme.primary, AppTheme.primaryContainer],
                     ),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(color: AppTheme.primary.withOpacity(0.2), blurRadius: 12, spreadRadius: 0),
+                    ],
                   ),
-                  child: const Icon(Icons.chat_bubble_rounded,
-                      color: Colors.white, size: 22),
+                  child: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 22),
                 ),
                 const SizedBox(width: 12),
                 const Text(
@@ -61,6 +63,7 @@ class Sidebar extends StatelessWidget {
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.textPrimary,
+                    letterSpacing: -0.02,
                   ),
                 ),
               ],
@@ -72,11 +75,31 @@ class Sidebar extends StatelessWidget {
           ...List.generate(_icons.length, (i) => _navItem(i)),
           const Spacer(),
           // Footer
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              'v1.0.0',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+          Container(
+            margin: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceContainerHigh.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppTheme.border, width: 1),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(Icons.person_rounded, size: 16, color: AppTheme.primary),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text('Admin', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppTheme.textPrimary)),
+                ),
+                const Text('v1.0', style: TextStyle(fontSize: 11, color: AppTheme.outline)),
+              ],
             ),
           ),
         ],
@@ -91,7 +114,7 @@ class Sidebar extends StatelessWidget {
       child: ListTile(
         leading: Icon(
           _icons[index],
-          color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+          color: isSelected ? AppTheme.primary : AppTheme.outline,
           size: 22,
         ),
         title: Text(
@@ -104,7 +127,7 @@ class Sidebar extends StatelessWidget {
         ),
         selected: isSelected,
         selectedTileColor: AppTheme.primary.withOpacity(0.1),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         dense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         onTap: () => onSelected(index),
