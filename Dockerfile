@@ -21,8 +21,8 @@ COPY widget/ ./widget/
 # Create uploads directory
 RUN mkdir -p uploads
 
-# Koyeb auto-assigns PORT env var
-ENV PORT=7860
+# Render auto-assigns PORT env var
+ENV PORT=10000
 EXPOSE $PORT
 
 CMD sh -c "uvicorn main:app --host 0.0.0.0 --port $PORT"

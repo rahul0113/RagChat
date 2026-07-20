@@ -120,7 +120,7 @@ RagChat/
     └── flutter-admin.yml
 ```
 
-## Deploy to Koyeb (Free, No Sleep)
+## Deploy to Render (Free)
 
 ### Prerequisites
 1. GitHub account with this repo
@@ -128,26 +128,28 @@ RagChat/
 3. Groq API key (free) — https://console.groq.com
 
 ### Steps
-1. Go to https://www.koyeb.com → Sign up with GitHub
-2. Click **Create App** → **Git**
-3. Select your `RagChat` repo
+1. Go to https://render.com → Sign up with GitHub
+2. Click **New** → **Web Service**
+3. Connect GitHub repo: `rahul0113/RagChat`
 4. Configure:
    - **Name**: `ragchat`
-   - **Port**: `7860`
-   - **Instance**: Nano (free)
+   - **Runtime**: Python 3
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+   - **Instance**: Free
 5. Add **Environment Variables**:
    - `GROQ_API_KEY` = your Groq key
    - `QDRANT_HOST` = your Qdrant Cloud cluster URL
    - `QDRANT_PORT` = 6333
    - `QDRANT_API_KEY` = your Qdrant Cloud API key
-   - `BACKEND_URL` = `https://ragchat-app.koyeb.app` (your Koyeb URL)
-6. Click **Deploy**
-7. Your app is live at `https://ragchat-app.koyeb.app`
+   - `BACKEND_URL` = `https://ragchat-app.onrender.com` (your Render URL)
+6. Click **Create Web Service**
+7. Your app is live at `https://ragchat-app.onrender.com`
 
 ### Connect Flutter Admin
 In the app, go to Settings → API Configuration and paste:
 ```
-https://ragchat-app.koyeb.app/api
+https://ragchat-app.onrender.com/api
 ```
 
 ## License

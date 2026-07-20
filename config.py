@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[str] = ["*"]
 
     # --- Backend URL (for widget embed code generation) ---
-    BACKEND_URL: str = ""  # Set to your deployed URL, e.g. https://ragchat-app.koyeb.app
+    BACKEND_URL: str = ""  # Set to your deployed URL, e.g. https://ragchat-app.onrender.com
 
     class Config:
         env_file = ".env"
