@@ -1,6 +1,5 @@
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:responsive_framework/responsive_framework.dart';
@@ -75,7 +74,7 @@ class RagChatAdmin extends StatelessWidget {
                 Breakpoint(start: 1921, end: 3840, name: '4K'),
               ],
             ),
-            home: const LandingScreen(),
+            home: const AdminShell(),
           );
         },
       ),
