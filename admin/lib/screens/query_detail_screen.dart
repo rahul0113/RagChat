@@ -277,7 +277,7 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.surfaceLight,
+              color: AppTheme.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(botA, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary), maxLines: 2, overflow: TextOverflow.ellipsis),

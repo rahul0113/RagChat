@@ -190,7 +190,7 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppTheme.surfaceLight,
+              color: AppTheme.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(

@@ -194,9 +194,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // Appearance
           _section('Appearance', [
+            // Theme selector
+            Row(
+              children: const [
+                Icon(Icons.style_rounded, size: 20, color: AppTheme.outline),
+                SizedBox(width: 12),
+                Text('Theme', style: TextStyle(fontSize: 14, color: AppTheme.textPrimary)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _themePreset('Lumina', const Color(0xFF14121F), const Color(0xFFC0C1FF), 'Default dark'),
+                _themePreset('Midnight', const Color(0xFF0A0A1A), const Color(0xFF6366F1), 'Deep dark'),
+                _themePreset('Ocean', const Color(0xFF0B1628), const Color(0xFF38BDF8), 'Blue tones'),
+                _themePreset('Forest', const Color(0xFF0A1A12), const Color(0xFF22C55E), 'Green tones'),
+                _themePreset('Sunset', const Color(0xFF1A0F0A), const Color(0xFFF97316), 'Warm tones'),
+                _themePreset('Lavender', const Color(0xFF16101F), const Color(0xFFA78BFA), 'Purple tones'),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Dark mode
             Row(
               children: [
-                Icon(_darkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded, size: 20, color: AppTheme.textSecondary),
+                Icon(_darkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded, size: 20, color: AppTheme.outline),
                 const SizedBox(width: 12),
                 const Expanded(child: Text('Dark Mode', style: TextStyle(fontSize: 14, color: AppTheme.textPrimary))),
                 Switch(
@@ -204,7 +228,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onChanged: (v) {
                     setState(() => _darkMode = v);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(v ? 'Dark mode enabled' : 'Light mode enabled'), backgroundColor: v ? AppTheme.primary : AppTheme.info, duration: const Duration(seconds: 1)),
+                      SnackBar(
+                        content: Text(v ? 'Dark mode enabled — Lumina Interface' : 'Light mode enabled'),
+                        backgroundColor: v ? _accentColor : AppTheme.info,
+                        duration: const Duration(seconds: 2),
+                      ),
                     );
                   },
                   activeColor: _accentColor,
@@ -212,9 +240,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
             const Divider(color: AppTheme.border, height: 24),
-            const Row(
-              children: [
-                Icon(Icons.palette_rounded, size: 20, color: AppTheme.textSecondary),
+
+            // Accent color
+            Row(
+              children: const [
+                Icon(Icons.palette_rounded, size: 20, color: AppTheme.outline),
                 SizedBox(width: 12),
                 Text('Accent Color', style: TextStyle(fontSize: 14, color: AppTheme.textPrimary)),
               ],
@@ -224,14 +254,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               spacing: 10,
               runSpacing: 10,
               children: [
-                _colorOption(const Color(0xFF6366F1), 'Indigo'),
-                _colorOption(const Color(0xFF8B5CF6), 'Purple'),
-                _colorOption(const Color(0xFF3B82F6), 'Blue'),
-                _colorOption(const Color(0xFF22C55E), 'Green'),
+                _colorOption(const Color(0xFFC0C1FF), 'Lumina Indigo'),
+                _colorOption(const Color(0xFF8083FF), 'Primary Container'),
+                _colorOption(const Color(0xFFDDB7FF), 'Lavender'),
+                _colorOption(const Color(0xFF4AE176), 'Emerald'),
                 _colorOption(const Color(0xFFF59E0B), 'Amber'),
                 _colorOption(const Color(0xFFEC4899), 'Pink'),
                 _colorOption(const Color(0xFF14B8A6), 'Teal'),
-                _colorOption(const Color(0xFFEF4444), 'Red'),
+                _colorOption(const Color(0xFFFFB4AB), 'Error Red'),
               ],
             ),
             const SizedBox(height: 12),
@@ -239,14 +269,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: _accentColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: _accentColor.withOpacity(0.3)),
               ),
               child: Row(
                 children: [
                   Icon(Icons.check_circle_rounded, color: _accentColor, size: 18),
                   const SizedBox(width: 8),
-                  Text('Active accent: #${_accentColor.value.toRadixString(16).substring(2).toUpperCase()}', style: TextStyle(color: _accentColor, fontSize: 13, fontWeight: FontWeight.w500)),
+                  Text('Active accent: #${_accentColor.value.toRadixString(16).substring(2).toUpperCase()}',
+                      style: TextStyle(color: _accentColor, fontSize: 13, fontWeight: FontWeight.w500)),
                 ],
               ),
             ),
@@ -322,6 +353,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text(value, style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary)),
         ]),
       ],
+    );
+  }
+
+  Widget _themePreset(String name, Color bg, Color accent, String subtitle) {
+    final isSelected = _accentColor.value == accent.value;
+    return GestureDetector(
+      onTap: () {
+        setState(() => _accentColor = accent);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$name theme selected'), backgroundColor: accent, duration: const Duration(seconds: 1)),
+        );
+      },
+      child: Container(
+        width: 120,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? accent : AppTheme.border,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(width: 12, height: 12, decoration: BoxDecoration(color: accent, shape: BoxShape.circle)),
+                const SizedBox(width: 6),
+                if (isSelected) Icon(Icons.check_rounded, size: 14, color: accent) else const Spacer(),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(name, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isSelected ? accent : AppTheme.textPrimary)),
+            const SizedBox(height: 2),
+            Text(subtitle, style: TextStyle(fontSize: 10, color: AppTheme.textSecondary.withOpacity(0.7))),
+          ],
+        ),
+      ),
     );
   }
 
