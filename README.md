@@ -3,22 +3,25 @@
 
 White-label RAG (Retrieval-Augmented Generation) SaaS platform. Build AI chatbots for any organization — sell to multiple clients with isolated data, custom themes, and a single embed code.
 
+**Live Backend:** `https://ragchat-tsqf.onrender.com`
+
 ## Architecture
 
 ```
-Client Website ←→ Glassmorphic Chat Widget ←→ FastAPI Backend ←→ Qdrant (vectors) + Groq LLM
-                                                                   ↕
-                                                        Flutter Admin Dashboard
+Client Website ←→ Glassmorphic Chat Widget ←→ FastAPI Backend ←→ Qdrant Cloud (vectors) + Groq LLM
+                                                                      ↕
+                                                          Flutter Admin Dashboard (APK/Web)
 ```
 
 | Component | Technology | Why |
 |-----------|-----------|-----|
 | LLM | Groq Llama 3 70B | Free tier, fastest inference |
-| Embeddings | BAAI/bge-large-en-v1.5 | Best open-source, runs locally |
-| Vector DB | Qdrant | Production-grade, native multi-tenancy |
-| Backend | FastAPI | Async, fast, auto-docs |
-| Admin | Flutter | Cross-platform (Web, Android, iOS, Desktop) |
+| Embeddings | BAAI/bge-large-en-v1.5 | Best open-source, lazy-loaded to save memory |
+| Vector DB | Qdrant Cloud | Production-grade, native multi-tenancy |
+| Backend | FastAPI + SQLite | Async, auto-docs, simple persistence |
+| Admin | Flutter | Cross-platform (Android APK, Web) |
 | Chat Widget | Vanilla JS | Embeddable, glassmorphic UI |
+| Hosting | Render (free tier) | Zero-cost deployment |
 
 ## Features
 
@@ -29,24 +32,25 @@ Client Website ←→ Glassmorphic Chat Widget ←→ FastAPI Backend ←→ Qdr
 - **Theme customization**: Per-client colors, gradients, blur effects
 - **Flutter admin dashboard**: Manage tenants, upload docs, view analytics
 - **Query analytics**: Top queries, usage trends, export to CSV
-- **CI/CD**: GitHub Actions builds web + APK on every push
+- **Landing screen**: Animated startup sequence with onboarding
+- **Global error handling**: Popup dialogs for network, server, and validation errors
+- **Dark + Light mode**: Full theme support with accent color picker
+- **Mobile-optimized**: All screens responsive for phone/tablet
+- **Pre-configured APK**: Works out of the box with no setup required
 
 ## Quick Start
 
-### Backend
+### Backend (local development)
 
 ```bash
 cd RagChat
 cp .env.example .env
 # Add your GROQ_API_KEY (free at https://console.groq.com)
+# Add your QDRANT_HOST, QDRANT_PORT, QDRANT_API_KEY (free at https://cloud.qdrant.io)
 
 pip install -r requirements.txt
-
-# Start Qdrant
-docker run -d -p 6333:6333 qdrant/qdrant
-
-# Start server
 python main.py
+# Server runs at http://localhost:8000
 ```
 
 ### Flutter Admin
@@ -63,6 +67,7 @@ flutter run              # Default device
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/api/chat/{slug}` | Chat with tenant's knowledge base |
+| POST | `/api/chat/{slug}/stream` | Streaming chat |
 | GET | `/api/widget/{slug}/config` | Widget theme config |
 | POST | `/api/admin/tenants` | Create tenant |
 | GET | `/api/admin/tenants` | List tenants |
@@ -70,22 +75,27 @@ flutter run              # Default device
 | PUT | `/api/admin/tenants/{id}/theme` | Update theme |
 | DELETE | `/api/admin/tenants/{id}` | Delete tenant |
 | POST | `/api/admin/tenants/{id}/upload` | Upload document |
+| GET | `/api/admin/tenants/{id}/documents` | List documents |
 | GET | `/api/admin/analytics/summary` | Dashboard stats |
 | GET | `/api/admin/analytics/top-queries` | Top queries |
+| GET | `/api/admin/analytics/recent` | Recent queries |
 | POST | `/api/admin/analytics/export` | Export CSV |
 | DELETE | `/api/admin/queries/{id}` | Delete query |
+| GET | `/api/health` | Health check |
+
+Full interactive docs at `/docs` when the server is running.
 
 ## Embedding the Widget
 
 ```html
-<script src="YOUR_DOMAIN/widget/static/widget.js"
+<script src="https://ragchat-tsqf.onrender.com/widget/static/widget.js"
         data-tenant-slug="your-client-slug"></script>
 ```
 
 ## Selling to Clients
 
 1. Create a tenant via admin dashboard or API
-2. Upload their documents (500-600+ supported)
+2. Upload their documents
 3. Customize theme (colors, gradient, blur)
 4. Give them the embed code
 5. Done — their data is fully isolated
@@ -96,10 +106,12 @@ flutter run              # Default device
 RagChat/
 ├── main.py                    # FastAPI entry point
 ├── config.py                  # Settings from .env
-├── requirements.txt
+├── requirements.txt           # Python dependencies (unpinned for Render compat)
+├── Dockerfile                 # Container config for Render
+├── .env                       # Secrets (QDRANT, GROQ keys)
 ├── rag/                       # RAG pipeline
 │   ├── pipeline.py            # Core orchestrator
-│   ├── embeddings.py          # BGE-large-en-v1.5
+│   ├── embeddings.py          # BGE-large-en-v1.5 (lazy-loaded)
 │   ├── vector_store.py        # Qdrant multi-tenant
 │   ├── llm.py                 # Groq Llama 3 70B
 │   ├── chunker.py             # Smart chunking
@@ -111,13 +123,15 @@ RagChat/
 ├── widget/static/widget.js    # Glassmorphic chat widget
 ├── admin/                     # Flutter dashboard
 │   ├── lib/
-│   │   ├── screens/           # 7 screens
-│   │   ├── widgets/           # Sidebar, cards
-│   │   ├── services/          # API + Auth
-│   │   └── theme/             # Dark glassmorphic theme
+│   │   ├── main.dart           # App entry + global theme state
+│   │   ├── screens/            # Landing, Dashboard, Tenants, Tenant Detail,
+│   │   │                       # Documents, Analytics, Settings, Query Detail
+│   │   ├── widgets/            # Sidebar, stat cards, tenant cards
+│   │   ├── services/           # API service, auth, error handler
+│   │   └── theme/              # Dark + light glassmorphic theme
 │   └── pubspec.yaml
 └── .github/workflows/         # CI/CD
-    └── flutter-admin.yml
+    └── flutter-admin.yml      # Build web + APK on push
 ```
 
 ## Deploy to Render (Free)
@@ -139,17 +153,21 @@ RagChat/
    - **Instance**: Free
 5. Add **Environment Variables**:
    - `GROQ_API_KEY` = your Groq key
-   - `QDRANT_HOST` = your Qdrant Cloud cluster URL
-   - `QDRANT_PORT` = 6333
+   - `QDRANT_HOST` = your Qdrant Cloud cluster URL (e.g. `xxx.qdrant.io`)
+   - `QDRANT_PORT` = `6333`
    - `QDRANT_API_KEY` = your Qdrant Cloud API key
-   - `BACKEND_URL` = `https://ragchat-app.onrender.com` (your Render URL)
+   - `BACKEND_URL` = `https://ragchat-tsqf.onrender.com` (your Render URL)
 6. Click **Create Web Service**
-7. Your app is live at `https://ragchat-app.onrender.com`
+7. Your app is live at `https://ragchat-tsqf.onrender.com`
 
-### Connect Flutter Admin
-In the app, go to Settings → API Configuration and paste:
-```
-https://ragchat-app.onrender.com/api
+### APK
+
+The Android APK works out of the box — the backend URL is pre-configured. Install and start using immediately.
+
+Download from GitHub Releases or build from `admin/` with:
+```bash
+cd admin
+flutter build apk --release
 ```
 
 ## License
