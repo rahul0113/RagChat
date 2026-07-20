@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
+import '../services/error_handler.dart';
 import '../models/tenant_model.dart';
 import '../theme/app_theme.dart';
 

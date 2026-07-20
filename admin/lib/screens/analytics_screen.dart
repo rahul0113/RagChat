@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
+import '../services/error_handler.dart';
 import '../widgets/stat_card.dart';
 import '../theme/app_theme.dart';
 import 'query_detail_screen.dart';
@@ -37,7 +38,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+        ErrorHandler.showNetworkError(context, details: e.toString(), onRetry: _loadData);
+      }
     }
   }
 

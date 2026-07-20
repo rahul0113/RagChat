@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../services/api_service.dart';
+import '../services/error_handler.dart';
 import '../models/tenant_model.dart';
 import '../widgets/stat_card.dart';
 import '../theme/app_theme.dart';
@@ -38,7 +39,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+        ErrorHandler.showNetworkError(context, details: e.toString(), onRetry: _loadData);
+      }
     }
   }
 
@@ -95,7 +99,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _loadData();
                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${nameCtrl.text} created'), backgroundColor: AppTheme.success));
                   } catch (e) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.error));
+                    if (ctx.mounted) ErrorHandler.showError(ctx, title: 'Create Tenant Failed', message: 'Could not create tenant. Please try again.', details: e.toString());
                   }
                 },
                 child: const Text('Create'),
@@ -202,7 +206,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _loadData();
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Upload failed: $e'), backgroundColor: AppTheme.error));
+      if (mounted) ErrorHandler.showError(context, title: 'Upload Failed', message: 'Could not upload ${file.name}. Please try again.', details: e.toString());
     }
   }
 

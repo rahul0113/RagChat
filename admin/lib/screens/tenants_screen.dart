@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
+import '../services/error_handler.dart';
 import '../models/tenant_model.dart';
 import '../widgets/tenant_card.dart';
 import '../theme/app_theme.dart';
@@ -45,7 +46,10 @@ class _TenantsScreenState extends State<TenantsScreen> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+        ErrorHandler.showNetworkError(context, details: e.toString(), onRetry: _loadTenants);
+      }
     }
   }
 
@@ -146,9 +150,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                       );
                     }
                   } catch (e) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(
-                      SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.error),
-                    );
+                    if (ctx.mounted) ErrorHandler.showError(ctx, title: 'Create Tenant Failed', message: 'Could not create tenant.', details: e.toString());
                   }
                 },
                 child: const Text('Create'),
@@ -192,11 +194,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                     );
                   }
                 } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.error),
-                    );
-                  }
+                  if (mounted) ErrorHandler.showError(context, title: 'Delete Failed', message: 'Could not delete tenant.', details: e.toString());
                 }
               },
               style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),

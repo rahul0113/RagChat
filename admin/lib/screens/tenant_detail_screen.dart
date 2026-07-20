@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../services/api_service.dart';
+import '../services/error_handler.dart';
 import '../models/tenant_model.dart';
 import '../theme/app_theme.dart';
 
@@ -35,6 +36,7 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
       });
     } catch (e) {
       setState(() => _loading = false);
+      if (mounted) ErrorHandler.showNetworkError(context, details: e.toString(), onRetry: _loadTenant);
     }
   }
 
@@ -231,9 +233,7 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
           );
           _loadTenant();
         } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Upload failed: $e'), backgroundColor: AppTheme.error),
-          );
+          if (mounted) ErrorHandler.showError(context, title: 'Upload Failed', message: 'Could not upload ${file.name}.', details: e.toString());
         }
       }
     }

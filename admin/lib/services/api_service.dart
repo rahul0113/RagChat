@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import '../models/tenant_model.dart';
+import 'error_handler.dart';
 
 class ApiService extends ChangeNotifier {
   String _baseUrl = 'https://ragchat-tsqf.onrender.com/api';

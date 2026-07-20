@@ -1,10 +1,13 @@
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 
 import 'services/api_service.dart';
 import 'services/auth_service.dart';
+import 'services/error_handler.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/tenants_screen.dart';
 import 'screens/tenant_detail_screen.dart';
@@ -20,6 +23,26 @@ final ValueNotifier<bool> darkModeNotifier = ValueNotifier(true);
 final ValueNotifier<Color> accentColorNotifier = ValueNotifier(AppTheme.primary);
 
 void main() {
+  // Global error handler for Flutter framework errors
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    developer.log(
+      'Flutter Error: ${details.exception}',
+      error: details.exception,
+      stackTrace: details.stack,
+    );
+  };
+
+  // Global error handler for async errors
+  WidgetsBinding.instance.platformDispatcher.onError = (error, stackTrace) {
+    developer.log(
+      'Platform Error: $error',
+      error: error,
+      stackTrace: stackTrace,
+    );
+    return true;
+  };
+
   runApp(const RagChatAdmin());
 }
 
