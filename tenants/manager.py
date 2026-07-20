@@ -35,8 +35,12 @@ def create_tenant(name: str, slug: str, org_name: str, plan: str = "free",
         db.commit()
         db.refresh(tenant)
 
-        # Create Qdrant collection
-        create_tenant_collection(tenant.id)
+        # Create Qdrant collection (non-fatal — tenant is created even if Qdrant is down)
+        try:
+            create_tenant_collection(tenant.id)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Qdrant collection create failed for {tenant.id}: {e}")
 
         return {
             "id": tenant.id,
