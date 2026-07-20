@@ -5,7 +5,7 @@ import 'dart:convert';
 import '../models/tenant_model.dart';
 
 class ApiService extends ChangeNotifier {
-  String _baseUrl = const String.fromEnvironment('API_URL', defaultValue: 'http://localhost:8000/api');
+  String _baseUrl = const String.fromEnvironment('API_URL', defaultValue: 'https://ragchat-tsqf.onrender.com/api');
   String? _apiKey;
 
   String get baseUrl => _baseUrl;
