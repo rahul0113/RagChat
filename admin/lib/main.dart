@@ -9,6 +9,7 @@ import 'screens/tenant_detail_screen.dart';
 import 'screens/documents_screen.dart';
 import 'screens/analytics_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/landing_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/sidebar.dart';
 
@@ -39,7 +40,7 @@ class RagChatAdmin extends StatelessWidget {
             themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
             darkTheme: AppTheme.darkTheme,
             theme: AppTheme.lightTheme,
-            home: const AdminShell(),
+            home: const LandingScreen(),
           );
         },
       ),
