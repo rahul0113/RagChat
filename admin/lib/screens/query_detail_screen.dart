@@ -298,53 +298,52 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
   }
 
   void _showAllConversations(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+    final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
+    final bgColor = isDark ? AppTheme.card : AppTheme.lightCard;
+    final surfaceHigh = isDark ? AppTheme.surfaceContainerHigh : AppTheme.lightSurfaceContainerHigh;
+    final borderColor = isDark ? AppTheme.border : AppTheme.lightBorder;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.surface,
+      backgroundColor: isDark ? AppTheme.surface : AppTheme.lightSurface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) {
-        final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
-        final bgColor = isDark ? AppTheme.card : AppTheme.lightCard;
-        final surfaceHigh = isDark ? AppTheme.surfaceContainerHigh : AppTheme.lightSurfaceContainerHigh;
-        final borderColor = isDark ? AppTheme.border : AppTheme.lightBorder;
-
-        return DraggableScrollableSheet(
-          initialChildSize: 0.7,
-          expand: false,
-          builder: (ctx, scrollController) => Column(
-            children: [
-              Container(margin: const EdgeInsets.only(top: 12), width: 40, height: 4,
-                  decoration: BoxDecoration(color: borderColor, borderRadius: BorderRadius.circular(2))),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text('All Conversations', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        expand: false,
+        builder: (ctx, scrollController) => Column(
+          children: [
+            Container(margin: const EdgeInsets.only(top: 12), width: 40, height: 4,
+                decoration: BoxDecoration(color: borderColor, borderRadius: BorderRadius.circular(2))),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('All Conversations', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
+            ),
+            Expanded(
+              child: ListView.builder(
+                controller: scrollController,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: _recentConversations.length,
+                itemBuilder: (ctx, i) {
+                  final q = _recentConversations[i];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _conversationCard(
+                      _tenantInitials(q['tenant_id'] ?? ''),
+                      q['question'] ?? '',
+                      q['answer'] ?? 'No answer',
+                      _timeAgo(q['created_at'] ?? ''),
+                      textColor, subtextColor, bgColor, borderColor, surfaceHigh,
+                    ),
+                  );
+                },
               ),
-              Expanded(
-                child: ListView.builder(
-                  controller: scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _recentConversations.length,
-                  itemBuilder: (ctx, i) {
-                    final q = _recentConversations[i];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: _conversationCard(
-                        _tenantInitials(q['tenant_id'] ?? ''),
-                        q['question'] ?? '',
-                        q['answer'] ?? 'No answer',
-                        _timeAgo(q['created_at'] ?? ''),
-                        textColor, subtextColor, bgColor, borderColor, surfaceHigh,
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
