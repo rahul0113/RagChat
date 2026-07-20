@@ -146,29 +146,113 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
 
           // API Configuration
-          _section('API Configuration', [
-            if (!_editingApi) ...[
-              _infoRow(Icons.language_rounded, 'API Base URL', api.baseUrl),
-              const SizedBox(height: 12),
-              _infoRow(Icons.key_rounded, 'API Key', api.isConfigured ? 'Connected' : 'Not Set'),
-              const SizedBox(height: 16),
-              Row(
+          _section('Connect to Backend', [
+            // Status indicator
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: api.isConfigured
+                    ? AppTheme.success.withOpacity(0.1)
+                    : AppTheme.warning.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: api.isConfigured ? AppTheme.success.withOpacity(0.3) : AppTheme.warning.withOpacity(0.3)),
+              ),
+              child: Row(
                 children: [
+                  Icon(
+                    api.isConfigured ? Icons.check_circle_rounded : Icons.warning_rounded,
+                    color: api.isConfigured ? AppTheme.success : AppTheme.warning,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
                   Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => setState(() => _editingApi = true),
-                      icon: const Icon(Icons.edit_rounded, size: 16),
-                      label: const Text('Configure'),
-                      style: OutlinedButton.styleFrom(foregroundColor: AppTheme.primary, side: const BorderSide(color: AppTheme.primary), padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          api.isConfigured ? 'Connected to backend' : 'Not connected',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: api.isConfigured ? AppTheme.success : AppTheme.warning),
+                        ),
+                        Text(
+                          api.isConfigured ? 'Dashboard data is live from your server' : 'Connect to your FastAPI backend to see real data',
+                          style: TextStyle(fontSize: 11, color: AppTheme.textSecondary.withOpacity(0.8)),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: 16),
+
+            // What is this?
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceContainerHigh.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppTheme.border),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('What is this?', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                  const SizedBox(height: 6),
+                  Text(
+                    'This connects your admin dashboard to the RagChat backend server. The backend runs the AI — '
+                    'processing documents, generating answers, and storing data. Without this connection, the dashboard shows placeholder data.',
+                    style: TextStyle(fontSize: 12, color: AppTheme.textSecondary.withOpacity(0.8), height: 1.4),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text('You need two things:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppTheme.textPrimary)),
+                  const SizedBox(height: 4),
+                  _helpStep('1', 'Backend URL', 'Where your FastAPI server is running (e.g. http://localhost:8000/api)'),
+                  const SizedBox(height: 4),
+                  _helpStep('2', 'API Key (optional)', 'Only if you enabled authentication on the backend'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            if (!_editingApi) ...[
+              // Current config
+              _infoRow(Icons.link_rounded, 'Backend URL', api.baseUrl),
+              const SizedBox(height: 10),
+              _infoRow(Icons.key_rounded, 'API Key', api.isConfigured ? 'Connected' : 'Not required'),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => setState(() => _editingApi = true),
+                  icon: const Icon(Icons.settings_rounded, size: 16),
+                  label: const Text('Configure Connection'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
             ] else ...[
-              TextField(controller: _urlCtrl, decoration: const InputDecoration(labelText: 'API Base URL', hintText: 'http://localhost:8000/api')),
+              // Edit mode
+              TextField(
+                controller: _urlCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Backend URL',
+                  hintText: 'http://localhost:8000/api',
+                  helperText: 'The full URL to your RagChat FastAPI server',
+                ),
+              ),
               const SizedBox(height: 12),
-              TextField(controller: _apiKeyCtrl, decoration: const InputDecoration(labelText: 'API Key (optional)', hintText: 'rc_...'), obscureText: true),
-              const SizedBox(height: 12),
+              TextField(
+                controller: _apiKeyCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'API Key (optional)',
+                  hintText: 'rc_...',
+                  helperText: 'Leave blank if auth is disabled',
+                ),
+                obscureText: true,
+              ),
+              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
@@ -176,8 +260,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   icon: _testingConnection
                       ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.info))
                       : const Icon(Icons.wifi_find_rounded, size: 16),
-                  label: Text(_testingConnection ? 'Testing...' : 'Test Connection'),
-                  style: OutlinedButton.styleFrom(foregroundColor: AppTheme.info, side: const BorderSide(color: AppTheme.info), padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                  label: Text(_testingConnection ? 'Testing connection...' : 'Test Connection'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.info,
+                    side: const BorderSide(color: AppTheme.info),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -328,6 +417,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _helpStep(String number, String title, String description) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 18, height: 18,
+          decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.15), borderRadius: BorderRadius.circular(4)),
+          child: Center(child: Text(number, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.primary))),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppTheme.textPrimary)),
+              Text(description, style: TextStyle(fontSize: 11, color: AppTheme.textSecondary.withOpacity(0.7))),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
