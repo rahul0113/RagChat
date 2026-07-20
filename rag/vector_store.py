@@ -23,15 +23,13 @@ _client = None
 def get_qdrant_client() -> QdrantClient:
     global _client
     if _client is None:
+        # Strip protocol and trailing slashes from host
+        host = settings.QDRANT_HOST.replace("https://", "").replace("http://", "").rstrip("/")
         if settings.QDRANT_API_KEY:
-            # Qdrant Cloud — host is already a full URL
-            host = settings.QDRANT_HOST
-            if not host.startswith("http"):
-                host = f"https://{host}"
-            _client = QdrantClient(url=host, api_key=settings.QDRANT_API_KEY)
+            _client = QdrantClient(host=host, port=settings.QDRANT_PORT, api_key=settings.QDRANT_API_KEY)
         else:
-            _client = QdrantClient(host=settings.QDRANT_HOST, port=settings.QDRANT_PORT)
-        logger.info(f"Connected to Qdrant at {settings.QDRANT_HOST}:{settings.QDRANT_PORT}")
+            _client = QdrantClient(host=host, port=settings.QDRANT_PORT)
+        logger.info(f"Connected to Qdrant at {host}:{settings.QDRANT_PORT}")
     return _client
 
 
