@@ -1,3 +1,12 @@
+---
+title: RagChat
+emoji: 🤖
+colorFrom: purple
+colorTo: blue
+sdk: docker
+pinned: false
+---
+
 # RagChat
 
 White-label RAG (Retrieval-Augmented Generation) SaaS platform. Build AI chatbots for any organization — sell to multiple clients with isolated data, custom themes, and a single embed code.
@@ -117,6 +126,27 @@ RagChat/
 │   └── pubspec.yaml
 └── .github/workflows/         # CI/CD
     └── flutter-admin.yml
+```
+
+## Deploy to Hugging Face Spaces
+
+1. Push this repo to GitHub
+2. Go to https://huggingface.co/new-space
+3. Select **Docker** as the SDK
+4. Import from your GitHub repo
+5. Add these **Secrets** in Space Settings → Variables and Secrets:
+   - `GROQ_API_KEY` = your Groq API key
+   - `QDRANT_HOST` = your Qdrant Cloud cluster URL
+   - `QDRANT_PORT` = 6333
+   - `QDRANT_API_KEY` = your Qdrant Cloud API key
+   - `BACKEND_URL` = https://your-username-ragchat.hf.space
+6. The Space will auto-build and deploy
+
+## Connect Flutter Admin to Backend
+
+In the app, go to Settings → API Configuration and paste:
+```
+https://your-username-ragchat.hf.space/api
 ```
 
 ## License

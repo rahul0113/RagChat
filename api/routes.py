@@ -161,7 +161,7 @@ async def admin_get_tenant(tenant_id: str):
         "total_queries": tenant.total_queries,
         "total_documents": tenant.total_documents,
         "vector_stats": stats,
-        "embed_code": f'<script src="/widget/static/widget.js" data-tenant-id="{tenant.id}" data-tenant-slug="{tenant.slug}"></script>',
+        "embed_code": f'<script src="{settings.BACKEND_URL}/widget/static/widget.js" data-tenant-id="{tenant.id}" data-tenant-slug="{tenant.slug}"></script>',
     }
 
 

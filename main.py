@@ -28,10 +28,10 @@ def create_app() -> FastAPI:
         version=settings.APP_VERSION,
     )
 
-    # CORS
+    # CORS — allow all origins for HF Spaces + widget embedding
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.CORS_ORIGINS,
+        allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -42,13 +42,19 @@ def create_app() -> FastAPI:
 
     # Serve widget static files
     widget_dir = Path(__file__).parent / "widget" / "static"
-    app.mount("/widget/static", StaticFiles(directory=str(widget_dir)), name="widget")
+    if widget_dir.exists():
+        app.mount("/widget/static", StaticFiles(directory=str(widget_dir)), name="widget")
 
     @app.on_event("startup")
     def startup():
         logger.info("Initializing database...")
         init_db()
         logger.info("RagChat is ready.")
+
+    # Health check endpoint (required for HF Spaces)
+    @app.get("/api/health")
+    def health():
+        return {"status": "healthy", "version": settings.APP_VERSION}
 
     @app.get("/", response_class=HTMLResponse)
     def root():
@@ -65,6 +71,7 @@ def create_app() -> FastAPI:
                 <li><code>POST /api/admin/tenants</code> — Create tenant</li>
                 <li><code>GET /api/admin/tenants</code> — List tenants</li>
                 <li><code>POST /api/admin/tenants/{id}/upload</code> — Upload documents</li>
+                <li><code>GET /api/health</code> — Health check</li>
                 <li><code>GET /docs</code> — API documentation</li>
             </ul>
         </body>

@@ -1,0 +1,10 @@
+admin/
+.github/
+.git/
+*.md
+.env
+uploads/
+__pycache__/
+*.pyc
+.dockerignore
+Dockerfile

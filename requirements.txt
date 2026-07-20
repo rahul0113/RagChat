@@ -25,4 +25,3 @@ markdown==3.7
 
 # Database
 sqlalchemy==2.0.36
-aiosqlite==0.20.0

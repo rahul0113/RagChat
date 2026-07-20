@@ -49,6 +49,9 @@ class Settings(BaseSettings):
     # --- CORS ---
     CORS_ORIGINS: list[str] = ["*"]
 
+    # --- Backend URL (for widget embed code generation) ---
+    BACKEND_URL: str = ""  # Set to your HF Spaces URL, e.g. https://your-app.hf.space
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
