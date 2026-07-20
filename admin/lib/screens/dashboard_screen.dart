@@ -194,50 +194,66 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isNarrow = MediaQuery.of(context).size.width < 600;
+
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isNarrow ? 16 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('RagChat Admin', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+              Text('RagChat Admin', style: TextStyle(fontSize: isNarrow ? 22 : 28, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
               IconButton(onPressed: _loadData, icon: const Icon(Icons.refresh_rounded, color: AppTheme.textSecondary)),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
           if (_loading)
             const Center(child: CircularProgressIndicator(color: AppTheme.primary))
           else ...[
-            Row(
-              children: [
-                Expanded(child: StatCard(title: 'Total Tenants', value: '${_stats?['total_tenants'] ?? 0}', icon: Icons.apartment_rounded, accentColor: AppTheme.primary)),
-                const SizedBox(width: 16),
-                Expanded(child: StatCard(title: 'Total Queries', value: '${_stats?['total_queries'] ?? 0}', icon: Icons.chat_bubble_rounded, accentColor: AppTheme.info)),
-                const SizedBox(width: 16),
-                Expanded(child: StatCard(title: 'Documents', value: '${_stats?['total_documents'] ?? 0}', icon: Icons.description_rounded, accentColor: AppTheme.success)),
-              ],
-            ),
-            const SizedBox(height: 24),
+            // Stats — stack vertically on mobile, horizontal on desktop
+            if (isNarrow) ...[
+              StatCard(title: 'Total Tenants', value: '${_stats?['total_tenants'] ?? 0}', icon: Icons.apartment_rounded, accentColor: AppTheme.primary),
+              const SizedBox(height: 12),
+              StatCard(title: 'Total Queries', value: '${_stats?['total_queries'] ?? 0}', icon: Icons.chat_bubble_rounded, accentColor: AppTheme.info),
+              const SizedBox(height: 12),
+              StatCard(title: 'Documents', value: '${_stats?['total_documents'] ?? 0}', icon: Icons.description_rounded, accentColor: AppTheme.success),
+            ] else
+              Row(
+                children: [
+                  Expanded(child: StatCard(title: 'Total Tenants', value: '${_stats?['total_tenants'] ?? 0}', icon: Icons.apartment_rounded, accentColor: AppTheme.primary)),
+                  const SizedBox(width: 16),
+                  Expanded(child: StatCard(title: 'Total Queries', value: '${_stats?['total_queries'] ?? 0}', icon: Icons.chat_bubble_rounded, accentColor: AppTheme.info)),
+                  const SizedBox(width: 16),
+                  Expanded(child: StatCard(title: 'Documents', value: '${_stats?['total_documents'] ?? 0}', icon: Icons.description_rounded, accentColor: AppTheme.success)),
+                ],
+              ),
+            const SizedBox(height: 20),
 
-            const Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+            // Quick Actions — stack on mobile
+            Text('Quick Actions', style: TextStyle(fontSize: isNarrow ? 16 : 18, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(child: _actionButton(Icons.add_rounded, 'Create Tenant', AppTheme.primary, _showCreateTenantDialog)),
-                const SizedBox(width: 16),
-                Expanded(child: _actionButton(Icons.upload_file_rounded, 'Upload Document', AppTheme.success, _showUploadDialog)),
-              ],
-            ),
+            if (isNarrow) ...[
+              _actionButton(Icons.add_rounded, 'Create Tenant', AppTheme.primary, _showCreateTenantDialog),
+              const SizedBox(height: 8),
+              _actionButton(Icons.upload_file_rounded, 'Upload Document', AppTheme.success, _showUploadDialog),
+            ] else
+              Row(
+                children: [
+                  Expanded(child: _actionButton(Icons.add_rounded, 'Create Tenant', AppTheme.primary, _showCreateTenantDialog)),
+                  const SizedBox(width: 16),
+                  Expanded(child: _actionButton(Icons.upload_file_rounded, 'Upload Document', AppTheme.success, _showUploadDialog)),
+                ],
+              ),
             const SizedBox(height: 24),
 
-            const Text('Recent Activity', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+            Text('Recent Activity', style: TextStyle(fontSize: isNarrow ? 16 : 18, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
             const SizedBox(height: 12),
             Expanded(
               child: Container(
-                decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.border)),
+                decoration: AppTheme.glassCardDecoration(),
                 child: _recentQueries.isEmpty
                     ? const Center(child: Text('No recent activity', style: TextStyle(color: AppTheme.textSecondary)))
                     : ListView.separated(
@@ -270,20 +286,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _actionButton(IconData icon, String label, Color color, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.3)),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.3), width: 1),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 22),
+            Icon(icon, color: color, size: 20),
             const SizedBox(width: 8),
-            Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 14)),
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 13),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ),
           ],
         ),
       ),
