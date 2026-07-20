@@ -69,86 +69,93 @@ class _TenantsScreenState extends State<TenantsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: AppTheme.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Create Tenant', style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600)),
-          content: SizedBox(
-            width: 400,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Name', hintText: 'e.g. ABC College'),
-                  onChanged: (v) {
-                    slugCtrl.text = v.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '-').replaceAll(RegExp(r'-+'), '-');
-                    setDialogState(() {});
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: slugCtrl,
-                  decoration: const InputDecoration(labelText: 'Slug (URL-safe)', hintText: 'e.g. abc-college'),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: orgCtrl,
-                  decoration: const InputDecoration(labelText: 'Organization Name', hintText: 'e.g. ABC College of Engineering'),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: selectedPlan,
-                  dropdownColor: AppTheme.surface,
-                  decoration: const InputDecoration(labelText: 'Plan'),
-                  items: const [
-                    DropdownMenuItem(value: 'free', child: Text('Free')),
-                    DropdownMenuItem(value: 'pro', child: Text('Pro')),
-                    DropdownMenuItem(value: 'enterprise', child: Text('Enterprise')),
-                  ],
-                  onChanged: (v) => setDialogState(() => selectedPlan = v ?? 'free'),
-                ),
-              ],
+        builder: (ctx, setDialogState) {
+          final isDark = Theme.of(ctx).brightness == Brightness.dark;
+          final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+          final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
+          final surfaceBg = isDark ? AppTheme.surface : AppTheme.lightSurface;
+
+          return AlertDialog(
+            backgroundColor: surfaceBg,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text('Create Tenant', style: TextStyle(color: textColor, fontWeight: FontWeight.w600)),
+            content: SizedBox(
+              width: 400,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameCtrl,
+                    decoration: const InputDecoration(labelText: 'Name', hintText: 'e.g. ABC College'),
+                    onChanged: (v) {
+                      slugCtrl.text = v.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '-').replaceAll(RegExp(r'-+'), '-');
+                      setDialogState(() {});
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: slugCtrl,
+                    decoration: const InputDecoration(labelText: 'Slug (URL-safe)', hintText: 'e.g. abc-college'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: orgCtrl,
+                    decoration: const InputDecoration(labelText: 'Organization Name', hintText: 'e.g. ABC College of Engineering'),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: selectedPlan,
+                    dropdownColor: surfaceBg,
+                    decoration: const InputDecoration(labelText: 'Plan'),
+                    items: const [
+                      DropdownMenuItem(value: 'free', child: Text('Free')),
+                      DropdownMenuItem(value: 'pro', child: Text('Pro')),
+                      DropdownMenuItem(value: 'enterprise', child: Text('Enterprise')),
+                    ],
+                    onChanged: (v) => setDialogState(() => selectedPlan = v ?? 'free'),
+                  ),
+                ],
+              ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameCtrl.text.isEmpty || slugCtrl.text.isEmpty || orgCtrl.text.isEmpty) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    const SnackBar(content: Text('Please fill all fields'), backgroundColor: AppTheme.error),
-                  );
-                  return;
-                }
-                try {
-                  final api = context.read<ApiService>();
-                  await api.createTenant(
-                    name: nameCtrl.text.trim(),
-                    slug: slugCtrl.text.trim(),
-                    orgName: orgCtrl.text.trim(),
-                    plan: selectedPlan,
-                  );
-                  Navigator.pop(ctx);
-                  _loadTenants();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('${nameCtrl.text} created'), backgroundColor: AppTheme.success),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text('Cancel', style: TextStyle(color: subtextColor)),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (nameCtrl.text.isEmpty || slugCtrl.text.isEmpty || orgCtrl.text.isEmpty) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(
+                      const SnackBar(content: Text('Please fill all fields'), backgroundColor: AppTheme.error),
+                    );
+                    return;
+                  }
+                  try {
+                    final api = context.read<ApiService>();
+                    await api.createTenant(
+                      name: nameCtrl.text.trim(),
+                      slug: slugCtrl.text.trim(),
+                      orgName: orgCtrl.text.trim(),
+                      plan: selectedPlan,
+                    );
+                    Navigator.pop(ctx);
+                    _loadTenants();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('${nameCtrl.text} created'), backgroundColor: AppTheme.success),
+                      );
+                    }
+                  } catch (e) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(
+                      SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.error),
                     );
                   }
-                } catch (e) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.error),
-                  );
-                }
-              },
-              child: const Text('Create'),
-            ),
-          ],
-        ),
+                },
+                child: const Text('Create'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -156,46 +163,57 @@ class _TenantsScreenState extends State<TenantsScreen> {
   void _confirmDeleteTenant(Tenant tenant) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete Tenant', style: TextStyle(color: AppTheme.textPrimary)),
-        content: Text(
-          'Are you sure you want to delete "${tenant.name}"? All data including documents and vectors will be permanently removed.',
-          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              try {
-                final api = context.read<ApiService>();
-                await api.deleteTenant(tenant.id);
-                _loadTenants();
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${tenant.name} deleted'), backgroundColor: AppTheme.error),
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.error),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
-            child: const Text('Delete'),
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+        final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
+        final surfaceBg = isDark ? AppTheme.surface : AppTheme.lightSurface;
+
+        return AlertDialog(
+          backgroundColor: surfaceBg,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text('Delete Tenant', style: TextStyle(color: textColor)),
+          content: Text(
+            'Are you sure you want to delete "${tenant.name}"? All data including documents and vectors will be permanently removed.',
+            style: TextStyle(color: subtextColor, fontSize: 14),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                try {
+                  final api = context.read<ApiService>();
+                  await api.deleteTenant(tenant.id);
+                  _loadTenants();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${tenant.name} deleted'), backgroundColor: AppTheme.error),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.error),
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+    final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -204,10 +222,10 @@ class _TenantsScreenState extends State<TenantsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Tenants', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+              Text('Tenants', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: textColor)),
               Row(
                 children: [
-                  IconButton(onPressed: _loadTenants, icon: const Icon(Icons.refresh_rounded, color: AppTheme.textSecondary)),
+                  IconButton(onPressed: _loadTenants, icon: Icon(Icons.refresh_rounded, color: subtextColor)),
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
                     onPressed: _showCreateTenantDialog,
@@ -221,25 +239,25 @@ class _TenantsScreenState extends State<TenantsScreen> {
           const SizedBox(height: 16),
           TextField(
             controller: _searchController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: 'Search tenants...',
-              prefixIcon: Icon(Icons.search_rounded, color: AppTheme.textSecondary),
+              prefixIcon: Icon(Icons.search_rounded, color: subtextColor),
             ),
           ),
           const SizedBox(height: 16),
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+                ? Center(child: CircularProgressIndicator(color: AppTheme.primary))
                 : _filtered.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.apartment_rounded, size: 48, color: AppTheme.textSecondary.withOpacity(0.3)),
+                            Icon(Icons.apartment_rounded, size: 48, color: subtextColor.withOpacity(0.3)),
                             const SizedBox(height: 12),
-                            const Text('No tenants found', style: TextStyle(color: AppTheme.textSecondary, fontSize: 16)),
+                            Text('No tenants found', style: TextStyle(color: subtextColor, fontSize: 16)),
                             const SizedBox(height: 8),
-                            const Text('Create your first tenant to get started', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                            Text('Create your first tenant to get started', style: TextStyle(color: subtextColor, fontSize: 13)),
                           ],
                         ),
                       )

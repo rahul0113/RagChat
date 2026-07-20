@@ -40,11 +40,18 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+    final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
+    final bgColor = isDark ? AppTheme.card : AppTheme.lightCard;
+    final surfaceHigh = isDark ? AppTheme.surfaceContainerHigh : AppTheme.lightSurfaceContainerHigh;
+    final borderColor = isDark ? AppTheme.border : AppTheme.lightBorder;
+
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
+      return Center(child: CircularProgressIndicator(color: AppTheme.primary));
     }
     if (_tenant == null) {
-      return const Center(child: Text('Tenant not found', style: TextStyle(color: AppTheme.textSecondary)));
+      return Center(child: Text('Tenant not found', style: TextStyle(color: subtextColor)));
     }
 
     return Padding(
@@ -54,14 +61,14 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
           // Header
           Row(
             children: [
-              IconButton(onPressed: widget.onBack, icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textPrimary)),
+              IconButton(onPressed: widget.onBack, icon: Icon(Icons.arrow_back_rounded, color: textColor)),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_tenant!.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-                    Text(_tenant!.orgName, style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
+                    Text(_tenant!.name, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: textColor)),
+                    Text(_tenant!.orgName, style: TextStyle(fontSize: 14, color: subtextColor)),
                   ],
                 ),
               ),
@@ -72,11 +79,11 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
           // Stats
           Row(
             children: [
-              _statCard('${_tenant!.totalQueries}', 'Queries', AppTheme.info),
+              _statCard('${_tenant!.totalQueries}', 'Queries', AppTheme.info, textColor, subtextColor),
               const SizedBox(width: 12),
-              _statCard('${_tenant!.totalDocuments}', 'Documents', AppTheme.success),
+              _statCard('${_tenant!.totalDocuments}', 'Documents', AppTheme.success, textColor, subtextColor),
               const SizedBox(width: 12),
-              _statCard('${_tenant!.vectorStats['total_vectors'] ?? 0}', 'Vectors', AppTheme.primary),
+              _statCard('${_tenant!.vectorStats['total_vectors'] ?? 0}', 'Vectors', AppTheme.primary, textColor, subtextColor),
             ],
           ),
           const SizedBox(height: 24),
@@ -92,26 +99,26 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
           const SizedBox(height: 24),
 
           // Theme Customization
-          const Text('Theme Customization', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+          Text('Theme Customization', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textColor)),
           const SizedBox(height: 12),
-          _buildThemeEditor(),
+          _buildThemeEditor(textColor, subtextColor, bgColor, surfaceHigh, borderColor),
           const SizedBox(height: 24),
 
           // Documents
-          const Text('Documents', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+          Text('Documents', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textColor)),
           const SizedBox(height: 12),
           if (_tenant!.totalDocuments == 0)
             Container(
               padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.border)),
-              child: const Center(child: Text('No documents uploaded yet', style: TextStyle(color: AppTheme.textSecondary))),
+              decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: borderColor)),
+              child: Center(child: Text('No documents uploaded yet', style: TextStyle(color: subtextColor))),
             ),
         ],
       ),
     );
   }
 
-  Widget _statCard(String value, String label, Color color) {
+  Widget _statCard(String value, String label, Color color, Color textColor, Color subtextColor) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -124,7 +131,7 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
           children: [
             Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: color)),
             const SizedBox(height: 4),
-            Text(label, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+            Text(label, style: TextStyle(fontSize: 12, color: subtextColor)),
           ],
         ),
       ),
@@ -154,7 +161,7 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
     );
   }
 
-  Widget _buildThemeEditor() {
+  Widget _buildThemeEditor(Color textColor, Color subtextColor, Color bgColor, Color surfaceHigh, Color borderColor) {
     final colors = [
       AppTheme.primary, const Color(0xFF8B5CF6), const Color(0xFF3B82F6),
       AppTheme.success, AppTheme.warning, const Color(0xFFEC4899),
@@ -164,9 +171,9 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.card,
+        color: bgColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.border),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,12 +192,12 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
             )).toList(),
           ),
           const SizedBox(height: 16),
-          const Text('Live Preview', style: TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+          Text('Live Preview', style: TextStyle(fontSize: 13, color: subtextColor)),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppTheme.surfaceContainerHigh,
+              color: surfaceHigh,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -201,7 +208,7 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
                     color: AppTheme.primary.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text('Hello! How can I help?', style: TextStyle(fontSize: 13, color: AppTheme.textPrimary)),
+                  child: Text('Hello! How can I help?', style: TextStyle(fontSize: 13, color: textColor)),
                 ),
               ],
             ),
@@ -236,20 +243,27 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
     final code = _tenant?.embedCode ?? '';
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.surface,
-        title: const Text('Embed Code', style: TextStyle(color: AppTheme.textPrimary)),
-        content: SelectableText(code, style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: AppTheme.textSecondary)),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: code));
-              Navigator.pop(ctx);
-            },
-            child: const Text('Copy'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+        final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
+        final surfaceBg = isDark ? AppTheme.surface : AppTheme.lightSurface;
+
+        return AlertDialog(
+          backgroundColor: surfaceBg,
+          title: Text('Embed Code', style: TextStyle(color: textColor)),
+          content: SelectableText(code, style: TextStyle(fontFamily: 'monospace', fontSize: 12, color: subtextColor)),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: code));
+                Navigator.pop(ctx);
+              },
+              child: const Text('Copy'),
+            ),
+          ],
+        );
+      },
     );
   }
 

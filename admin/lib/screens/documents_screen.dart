@@ -39,6 +39,13 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+    final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
+    final bgColor = isDark ? AppTheme.card : AppTheme.lightCard;
+    final surfaceBg = isDark ? AppTheme.surface : AppTheme.lightSurface;
+    final borderColor = isDark ? AppTheme.border : AppTheme.lightBorder;
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -47,10 +54,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Documents', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+              Text('Documents', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: textColor)),
               IconButton(
                 onPressed: _loadData,
-                icon: const Icon(Icons.refresh_rounded, color: AppTheme.textSecondary),
+                icon: Icon(Icons.refresh_rounded, color: subtextColor),
               ),
             ],
           ),
@@ -58,9 +65,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           // Stats from API
           Row(
             children: [
-              _statCard('$_totalDocs', 'Total Files', Icons.description_rounded, AppTheme.primary),
+              _statCard('$_totalDocs', 'Total Files', Icons.description_rounded, AppTheme.primary, subtextColor),
               const SizedBox(width: 12),
-              _statCard('${_tenants.length}', 'Tenants', Icons.apartment_rounded, AppTheme.info),
+              _statCard('${_tenants.length}', 'Tenants', Icons.apartment_rounded, AppTheme.info, subtextColor),
             ],
           ),
           const SizedBox(height: 16),
@@ -71,13 +78,13 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               final isActive = _selectedFilter == f;
               return FilterChip(
                 label: Text(f, style: TextStyle(
-                  color: isActive ? Colors.white : AppTheme.textSecondary,
+                  color: isActive ? Colors.white : subtextColor,
                   fontWeight: FontWeight.w500,
                 )),
                 selected: isActive,
                 selectedColor: AppTheme.primary,
-                backgroundColor: AppTheme.card,
-                side: const BorderSide(color: AppTheme.border),
+                backgroundColor: surfaceBg,
+                side: BorderSide(color: borderColor),
                 onSelected: (_) => setState(() => _selectedFilter = f),
               );
             }).toList(),
@@ -86,15 +93,15 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           // Document list grouped by tenant
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+                ? Center(child: CircularProgressIndicator(color: AppTheme.primary))
                 : _tenants.isEmpty
-                    ? const Center(child: Text('No tenants yet. Create one to upload documents.', style: TextStyle(color: AppTheme.textSecondary)))
+                    ? Center(child: Text('No tenants yet. Create one to upload documents.', style: TextStyle(color: subtextColor)))
                     : ListView.separated(
                         itemCount: _tenants.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 12),
                         itemBuilder: (ctx, i) {
                           final t = _tenants[i];
-                          return _tenantDocCard(t);
+                          return _tenantDocCard(t, textColor, subtextColor, bgColor, borderColor);
                         },
                       ),
           ),
@@ -103,13 +110,13 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     );
   }
 
-  Widget _tenantDocCard(Tenant tenant) {
+  Widget _tenantDocCard(Tenant tenant, Color textColor, Color subtextColor, Color bgColor, Color borderColor) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.card,
+        color: bgColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.border),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,8 +139,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(tenant.name, style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
-                    Text('${tenant.totalDocuments} documents uploaded', style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                    Text(tenant.name, style: TextStyle(fontWeight: FontWeight.w600, color: textColor)),
+                    Text('${tenant.totalDocuments} documents uploaded', style: TextStyle(fontSize: 12, color: subtextColor)),
                   ],
                 ),
               ),
@@ -141,15 +148,15 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           ),
           if (tenant.totalDocuments == 0) ...[
             const SizedBox(height: 12),
-            const Text('No documents uploaded yet. Go to Tenant Details to upload.',
-                style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+            Text('No documents uploaded yet. Go to Tenant Details to upload.',
+                style: TextStyle(fontSize: 12, color: subtextColor)),
           ],
         ],
       ),
     );
   }
 
-  Widget _statCard(String value, String label, IconData icon, Color color) {
+  Widget _statCard(String value, String label, IconData icon, Color color, Color subtextColor) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -166,7 +173,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: color)),
-                Text(label, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                Text(label, style: TextStyle(fontSize: 12, color: subtextColor)),
               ],
             ),
           ],

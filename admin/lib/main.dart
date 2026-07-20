@@ -15,6 +15,10 @@ import 'screens/landing_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/sidebar.dart';
 
+// Global theme state
+final ValueNotifier<bool> darkModeNotifier = ValueNotifier(true);
+final ValueNotifier<Color> accentColorNotifier = ValueNotifier(AppTheme.primary);
+
 void main() {
   runApp(const RagChatAdmin());
 }
@@ -29,21 +33,56 @@ class RagChatAdmin extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => ApiService()),
       ],
-      child: MaterialApp(
-        title: 'RagChat Admin',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.darkTheme,
-        builder: (context, child) => ResponsiveBreakpoints.builder(
-          child: child!,
-          breakpoints: const [
-            Breakpoint(start: 0, end: 450, name: MOBILE),
-            Breakpoint(start: 451, end: 800, name: TABLET),
-            Breakpoint(start: 801, end: 1920, name: DESKTOP),
-            Breakpoint(start: 1921, end: 3840, name: '4K'),
-          ],
-        ),
-        home: const LandingScreen(),
+      child: ValueListenableBuilder2<bool, Color>(
+        valueListenable1: darkModeNotifier,
+        valueListenable2: accentColorNotifier,
+        builder: (context, isDark, accentColor, _) {
+          return MaterialApp(
+            title: 'RagChat Admin',
+            debugShowCheckedModeBanner: false,
+            themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+            darkTheme: AppTheme.darkTheme,
+            theme: AppTheme.lightTheme,
+            builder: (context, child) => ResponsiveBreakpoints.builder(
+              child: child!,
+              breakpoints: const [
+                Breakpoint(start: 0, end: 450, name: MOBILE),
+                Breakpoint(start: 451, end: 800, name: TABLET),
+                Breakpoint(start: 801, end: 1920, name: DESKTOP),
+                Breakpoint(start: 1921, end: 3840, name: '4K'),
+              ],
+            ),
+            home: const LandingScreen(),
+          );
+        },
       ),
+    );
+  }
+}
+
+/// Helper widget to combine two ValueListenable
+class ValueListenableBuilder2<A, B> extends StatelessWidget {
+  final ValueNotifier<A> valueListenable1;
+  final ValueNotifier<B> valueListenable2;
+  final Widget Function(BuildContext, A, B, Widget?) builder;
+
+  const ValueListenableBuilder2({
+    super.key,
+    required this.valueListenable1,
+    required this.valueListenable2,
+    required this.builder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<A>(
+      valueListenable: valueListenable1,
+      builder: (context, a, _) {
+        return ValueListenableBuilder<B>(
+          valueListenable: valueListenable2,
+          builder: (context, b, child) => builder(context, a, b, child),
+        );
+      },
     );
   }
 }
@@ -83,9 +122,7 @@ class _AdminShellState extends State<AdminShell> {
               });
             },
           ),
-          Expanded(
-            child: _buildPage(),
-          ),
+          Expanded(child: _buildPage()),
         ],
       ),
       drawer: isMobile ? Drawer(
@@ -101,9 +138,7 @@ class _AdminShellState extends State<AdminShell> {
         ),
       ) : null,
       appBar: isMobile ? AppBar(
-        title: Text(_selectedTenantId != null
-            ? 'Tenant Details'
-            : _titles[_selectedIndex]),
+        title: Text(_selectedTenantId != null ? 'Tenant Details' : _titles[_selectedIndex]),
         leading: Builder(
           builder: (ctx) => IconButton(
             icon: const Icon(Icons.menu),
@@ -123,20 +158,12 @@ class _AdminShellState extends State<AdminShell> {
     }
 
     switch (_selectedIndex) {
-      case 0:
-        return const DashboardScreen();
-      case 1:
-        return TenantsScreen(
-          onTenantSelected: (id) => setState(() => _selectedTenantId = id),
-        );
-      case 2:
-        return const DocumentsScreen();
-      case 3:
-        return const AnalyticsScreen();
-      case 4:
-        return const SettingsScreen();
-      default:
-        return const DashboardScreen();
+      case 0: return const DashboardScreen();
+      case 1: return TenantsScreen(onTenantSelected: (id) => setState(() => _selectedTenantId = id));
+      case 2: return const DocumentsScreen();
+      case 3: return const AnalyticsScreen();
+      case 4: return const SettingsScreen();
+      default: return const DashboardScreen();
     }
   }
 }

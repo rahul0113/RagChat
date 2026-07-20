@@ -44,8 +44,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   @override
   Widget build(BuildContext context) {
     final visible = _showAll ? _topQueries : _topQueries.take(5).toList();
-
     final isNarrow = MediaQuery.of(context).size.width < 600;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+    final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
+    final bgColor = isDark ? AppTheme.card : AppTheme.lightCard;
+    final borderColor = isDark ? AppTheme.border : AppTheme.lightBorder;
 
     return Padding(
       padding: EdgeInsets.all(isNarrow ? 16 : 24),
@@ -55,14 +59,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Analytics', style: TextStyle(fontSize: isNarrow ? 22 : 28, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-              IconButton(onPressed: _loadData, icon: const Icon(Icons.refresh_rounded, color: AppTheme.textSecondary)),
+              Text('Analytics', style: TextStyle(fontSize: isNarrow ? 22 : 28, fontWeight: FontWeight.w700, color: textColor)),
+              IconButton(onPressed: _loadData, icon: Icon(Icons.refresh_rounded, color: subtextColor)),
             ],
           ),
           const SizedBox(height: 20),
 
           if (_loading)
-            const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+            Center(child: CircularProgressIndicator(color: AppTheme.primary))
           else ...[
             // Stats — stack on mobile
             if (isNarrow) ...[
@@ -87,11 +91,15 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             Container(
               height: isNarrow ? 140 : 180,
               padding: const EdgeInsets.all(16),
-              decoration: AppTheme.glassCardDecoration(),
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: borderColor, width: 1),
+              ),
               child: Center(
                 child: _topQueries.isEmpty
-                    ? const Text('No query data yet. Start chatting to see trends.', style: TextStyle(color: AppTheme.textSecondary))
-                    : const Text('Query Trend Chart (fl_chart integration)', style: TextStyle(color: AppTheme.textSecondary)),
+                    ? Text('No query data yet. Start chatting to see trends.', style: TextStyle(color: subtextColor))
+                    : Text('Query Trend Chart (fl_chart integration)', style: TextStyle(color: subtextColor)),
               ),
             ),
             const SizedBox(height: 20),
@@ -100,11 +108,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Top Queries (${_topQueries.length})', style: TextStyle(fontSize: isNarrow ? 16 : 18, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                Text('Top Queries (${_topQueries.length})', style: TextStyle(fontSize: isNarrow ? 16 : 18, fontWeight: FontWeight.w600, color: textColor)),
                 if (_topQueries.length > 5)
                   TextButton(
                     onPressed: () => setState(() => _showAll = !_showAll),
-                    child: Text(_showAll ? 'Show Less' : 'View All', style: const TextStyle(color: AppTheme.primary, fontSize: 13)),
+                    child: Text(_showAll ? 'Show Less' : 'View All', style: TextStyle(color: AppTheme.primary, fontSize: 13)),
                   ),
               ],
             ),
@@ -114,15 +122,23 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             Expanded(
               child: _topQueries.isEmpty
                   ? Container(
-                      decoration: AppTheme.glassCardDecoration(),
-                      child: const Center(child: Text('No queries recorded yet.', style: TextStyle(color: AppTheme.textSecondary))),
+                      decoration: BoxDecoration(
+                        color: bgColor,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: borderColor, width: 1),
+                      ),
+                      child: Center(child: Text('No queries recorded yet.', style: TextStyle(color: subtextColor))),
                     )
                   : Container(
-                      decoration: AppTheme.glassCardDecoration(),
+                      decoration: BoxDecoration(
+                        color: bgColor,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: borderColor, width: 1),
+                      ),
                       child: ListView.separated(
                         padding: EdgeInsets.all(isNarrow ? 8 : 12),
                         itemCount: visible.length,
-                        separatorBuilder: (_, __) => const Divider(color: AppTheme.border, height: 1),
+                        separatorBuilder: (_, __) => Divider(color: borderColor, height: 1),
                         itemBuilder: (ctx, i) {
                           final q = visible[i];
                           return ListTile(
@@ -137,16 +153,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                               decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.15), borderRadius: BorderRadius.circular(6)),
                               child: Center(child: Text('${i + 1}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.primary))),
                             ),
-                            title: Text(q['question'] ?? '', style: TextStyle(fontSize: isNarrow ? 13 : 14, color: AppTheme.textPrimary), maxLines: 2, overflow: TextOverflow.ellipsis),
+                            title: Text(q['question'] ?? '', style: TextStyle(fontSize: isNarrow ? 13 : 14, color: textColor), maxLines: 2, overflow: TextOverflow.ellipsis),
                             subtitle: (q['last_asked'] ?? '').toString().isNotEmpty
-                                ? Text('Last: ${q['last_asked']}', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary))
+                                ? Text('Last: ${q['last_asked']}', style: TextStyle(fontSize: 11, color: subtextColor))
                                 : null,
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('${q['uses'] ?? 0}', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                                Text('${q['uses'] ?? 0}', style: TextStyle(fontSize: 11, color: subtextColor)),
                                 const SizedBox(width: 2),
-                                const Icon(Icons.chevron_right_rounded, size: 16, color: AppTheme.outline),
+                                Icon(Icons.chevron_right_rounded, size: 16, color: subtextColor),
                               ],
                             ),
                           );

@@ -43,14 +43,23 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+    final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
+    final bgColor = isDark ? AppTheme.card : AppTheme.lightCard;
+    final surfaceBg = isDark ? AppTheme.surface : AppTheme.lightSurface;
+    final surfaceHigh = isDark ? AppTheme.surfaceContainerHigh : AppTheme.lightSurfaceContainerHigh;
+    final borderColor = isDark ? AppTheme.border : AppTheme.lightBorder;
+    final scaffoldBg = isDark ? AppTheme.background : AppTheme.lightBackground;
+
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textPrimary),
+          icon: Icon(Icons.arrow_back_rounded, color: textColor),
         ),
-        title: const Text('Query Details', style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600)),
+        title: Text('Query Details', style: TextStyle(color: textColor, fontWeight: FontWeight.w600)),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -62,9 +71,9 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.card,
+                color: bgColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.border),
+                border: Border.all(color: borderColor),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,11 +102,11 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Text(widget.question, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppTheme.textPrimary, height: 1.3)),
+                  Text(widget.question, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: textColor, height: 1.3)),
                   const SizedBox(height: 12),
-                  _infoRow(Icons.access_time_rounded, '${_recentConversations.length} conversations'),
+                  _infoRow(Icons.access_time_rounded, '${_recentConversations.length} conversations', subtextColor),
                   const SizedBox(height: 6),
-                  _infoRow(Icons.chat_bubble_rounded, 'Asked across tenants'),
+                  _infoRow(Icons.chat_bubble_rounded, 'Asked across tenants', subtextColor),
                 ],
               ),
             ),
@@ -108,21 +117,21 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
               height: 180,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.card,
+                color: bgColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.border),
+                border: Border.all(color: borderColor),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Usage Trend (7 Days)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                  Text('Usage Trend (7 Days)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textColor)),
                   const SizedBox(height: 16),
                   Expanded(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        _bar(0.6, 'Mon'), _bar(0.8, 'Tue'), _bar(0.5, 'Wed'),
-                        _bar(1.0, 'Thu'), _bar(0.7, 'Fri'), _bar(0.4, 'Sat'), _bar(0.3, 'Sun'),
+                        _bar(0.6, 'Mon', subtextColor), _bar(0.8, 'Tue', subtextColor), _bar(0.5, 'Wed', subtextColor),
+                        _bar(1.0, 'Thu', subtextColor), _bar(0.7, 'Fri', subtextColor), _bar(0.4, 'Sat', subtextColor), _bar(0.3, 'Sun', subtextColor),
                       ],
                     ),
                   ),
@@ -136,26 +145,26 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Recent Conversations (${_recentConversations.length})',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textColor)),
                 TextButton(
                   onPressed: () => _showAllConversations(context),
-                  child: const Text('View All', style: TextStyle(color: AppTheme.primary, fontSize: 13)),
+                  child: Text('View All', style: TextStyle(color: AppTheme.primary, fontSize: 13)),
                 ),
               ],
             ),
             const SizedBox(height: 12),
 
             if (_loading)
-              const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+              Center(child: CircularProgressIndicator(color: AppTheme.primary))
             else if (_recentConversations.isEmpty)
               Container(
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  color: AppTheme.card,
+                  color: bgColor,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.border),
+                  border: Border.all(color: borderColor),
                 ),
-                child: const Center(child: Text('No conversations found', style: TextStyle(color: AppTheme.textSecondary))),
+                child: Center(child: Text('No conversations found', style: TextStyle(color: subtextColor))),
               )
             else
               ..._recentConversations.take(3).map((q) => Padding(
@@ -165,6 +174,7 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
                   q['question'] ?? '',
                   q['answer'] ?? 'No answer recorded',
                   _timeAgo(q['created_at'] ?? ''),
+                  textColor, subtextColor, bgColor, borderColor, surfaceHigh,
                 ),
               )),
 
@@ -208,17 +218,17 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
     );
   }
 
-  Widget _infoRow(IconData icon, String text) {
+  Widget _infoRow(IconData icon, String text, Color subtextColor) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: AppTheme.textSecondary),
+        Icon(icon, size: 14, color: subtextColor),
         const SizedBox(width: 8),
-        Text(text, style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+        Text(text, style: TextStyle(fontSize: 13, color: subtextColor)),
       ],
     );
   }
 
-  Widget _bar(double height, String label) {
+  Widget _bar(double height, String label, Color subtextColor) {
     return Expanded(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
@@ -234,19 +244,19 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
             ),
           ),
           const SizedBox(height: 6),
-          Text(label, style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
+          Text(label, style: TextStyle(fontSize: 10, color: subtextColor)),
         ],
       ),
     );
   }
 
-  Widget _conversationCard(String initials, String userQ, String botA, String time) {
+  Widget _conversationCard(String initials, String userQ, String botA, String time, Color textColor, Color subtextColor, Color bgColor, Color borderColor, Color surfaceHigh) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.card,
+        color: bgColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.border),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,8 +276,8 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(userQ, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppTheme.textPrimary)),
-                    Text(time, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                    Text(userQ, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textColor)),
+                    Text(time, style: TextStyle(fontSize: 11, color: subtextColor)),
                   ],
                 ),
               ),
@@ -277,10 +287,10 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.surfaceContainerHigh,
+              color: surfaceHigh,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text(botA, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary), maxLines: 2, overflow: TextOverflow.ellipsis),
+            child: Text(botA, style: TextStyle(fontSize: 12, color: subtextColor), maxLines: 2, overflow: TextOverflow.ellipsis),
           ),
         ],
       ),
@@ -293,39 +303,48 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
       isScrollControlled: true,
       backgroundColor: AppTheme.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        expand: false,
-        builder: (ctx, scrollController) => Column(
-          children: [
-            Container(margin: const EdgeInsets.only(top: 12), width: 40, height: 4,
-                decoration: BoxDecoration(color: AppTheme.border, borderRadius: BorderRadius.circular(2))),
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('All Conversations', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-            ),
-            Expanded(
-              child: ListView.builder(
-                controller: scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _recentConversations.length,
-                itemBuilder: (ctx, i) {
-                  final q = _recentConversations[i];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: _conversationCard(
-                      _tenantInitials(q['tenant_id'] ?? ''),
-                      q['question'] ?? '',
-                      q['answer'] ?? 'No answer',
-                      _timeAgo(q['created_at'] ?? ''),
-                    ),
-                  );
-                },
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+        final bgColor = isDark ? AppTheme.card : AppTheme.lightCard;
+        final surfaceHigh = isDark ? AppTheme.surfaceContainerHigh : AppTheme.lightSurfaceContainerHigh;
+        final borderColor = isDark ? AppTheme.border : AppTheme.lightBorder;
+
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          expand: false,
+          builder: (ctx, scrollController) => Column(
+            children: [
+              Container(margin: const EdgeInsets.only(top: 12), width: 40, height: 4,
+                  decoration: BoxDecoration(color: borderColor, borderRadius: BorderRadius.circular(2))),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text('All Conversations', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
               ),
-            ),
-          ],
-        ),
-      ),
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _recentConversations.length,
+                  itemBuilder: (ctx, i) {
+                    final q = _recentConversations[i];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _conversationCard(
+                        _tenantInitials(q['tenant_id'] ?? ''),
+                        q['question'] ?? '',
+                        q['answer'] ?? 'No answer',
+                        _timeAgo(q['created_at'] ?? ''),
+                        textColor, subtextColor, bgColor, borderColor, surfaceHigh,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -345,40 +364,47 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
         context: context,
         backgroundColor: AppTheme.surface,
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-        builder: (ctx) => Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Export Data', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.circular(8)),
-                child: SelectableText(csv, style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: AppTheme.textSecondary)),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Clipboard.setData(ClipboardData(text: csv));
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Copied to clipboard'), backgroundColor: AppTheme.success),
-                        );
-                      },
-                      icon: const Icon(Icons.copy_rounded, size: 16),
-                      label: const Text('Copy CSV'),
+        builder: (ctx) {
+          final isDark = Theme.of(ctx).brightness == Brightness.dark;
+          final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+          final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
+          final bgColor = isDark ? AppTheme.card : AppTheme.lightCard;
+
+          return Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Export Data', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(8)),
+                  child: SelectableText(csv, style: TextStyle(fontSize: 11, fontFamily: 'monospace', color: subtextColor)),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: csv));
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Copied to clipboard'), backgroundColor: AppTheme.success),
+                          );
+                        },
+                        icon: const Icon(Icons.copy_rounded, size: 16),
+                        label: const Text('Copy CSV'),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
       );
     }
   }
@@ -386,40 +412,47 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
   void _confirmDelete(BuildContext context) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.surface,
-        title: const Text('Delete Query', style: TextStyle(color: AppTheme.textPrimary)),
-        content: Text(
-          'Are you sure you want to delete "${widget.question}"? This action cannot be undone.',
-          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final api = context.read<ApiService>();
-              final queries = await api.getRecentQueries(limit: 1000);
-              final match = queries.firstWhere((q) => q['question'] == widget.question, orElse: () => {});
-              if (match.isNotEmpty && match['id'] != null) {
-                await api.deleteQuery(match['id']);
-              }
-              if (mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('"${widget.question}" deleted'),
-                    backgroundColor: AppTheme.error,
-                    action: SnackBarAction(label: 'Undo', textColor: Colors.white, onPressed: () {}),
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
-            child: const Text('Delete'),
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+        final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
+        final surfaceBg = isDark ? AppTheme.surface : AppTheme.lightSurface;
+
+        return AlertDialog(
+          backgroundColor: surfaceBg,
+          title: Text('Delete Query', style: TextStyle(color: textColor)),
+          content: Text(
+            'Are you sure you want to delete "${widget.question}"? This action cannot be undone.',
+            style: TextStyle(color: subtextColor, fontSize: 14),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final api = context.read<ApiService>();
+                final queries = await api.getRecentQueries(limit: 1000);
+                final match = queries.firstWhere((q) => q['question'] == widget.question, orElse: () => {});
+                if (match.isNotEmpty && match['id'] != null) {
+                  await api.deleteQuery(match['id']);
+                }
+                if (mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('"${widget.question}" deleted'),
+                      backgroundColor: AppTheme.error,
+                      action: SnackBarAction(label: 'Undo', textColor: Colors.white, onPressed: () {}),
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
     );
   }
 

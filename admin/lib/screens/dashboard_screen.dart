@@ -51,50 +51,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: AppTheme.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Create Tenant', style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600)),
-          content: SizedBox(
-            width: 400,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name', hintText: 'e.g. ABC College'),
-                  onChanged: (v) { slugCtrl.text = v.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '-').replaceAll(RegExp(r'-+'), '-'); setDialogState(() {}); }),
-                const SizedBox(height: 12),
-                TextField(controller: slugCtrl, decoration: const InputDecoration(labelText: 'Slug')),
-                const SizedBox(height: 12),
-                TextField(controller: orgCtrl, decoration: const InputDecoration(labelText: 'Organization Name')),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(value: selectedPlan, dropdownColor: AppTheme.surface, decoration: const InputDecoration(labelText: 'Plan'),
-                  items: const [DropdownMenuItem(value: 'free', child: Text('Free')), DropdownMenuItem(value: 'pro', child: Text('Pro')), DropdownMenuItem(value: 'enterprise', child: Text('Enterprise'))],
-                  onChanged: (v) => setDialogState(() => selectedPlan = v ?? 'free')),
-              ],
+        builder: (ctx, setDialogState) {
+          final isDark = Theme.of(ctx).brightness == Brightness.dark;
+          final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+          final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
+          final surfaceBg = isDark ? AppTheme.surface : AppTheme.lightSurface;
+          final borderColor = isDark ? AppTheme.border : AppTheme.lightBorder;
+
+          return AlertDialog(
+            backgroundColor: surfaceBg,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text('Create Tenant', style: TextStyle(color: textColor, fontWeight: FontWeight.w600)),
+            content: SizedBox(
+              width: 400,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name', hintText: 'e.g. ABC College'),
+                    onChanged: (v) { slugCtrl.text = v.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '-').replaceAll(RegExp(r'-+'), '-'); setDialogState(() {}); }),
+                  const SizedBox(height: 12),
+                  TextField(controller: slugCtrl, decoration: const InputDecoration(labelText: 'Slug')),
+                  const SizedBox(height: 12),
+                  TextField(controller: orgCtrl, decoration: const InputDecoration(labelText: 'Organization Name')),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(value: selectedPlan, dropdownColor: surfaceBg, decoration: const InputDecoration(labelText: 'Plan'),
+                    items: const [DropdownMenuItem(value: 'free', child: Text('Free')), DropdownMenuItem(value: 'pro', child: Text('Pro')), DropdownMenuItem(value: 'enterprise', child: Text('Enterprise'))],
+                    onChanged: (v) => setDialogState(() => selectedPlan = v ?? 'free')),
+                ],
+              ),
             ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary))),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameCtrl.text.isEmpty || slugCtrl.text.isEmpty || orgCtrl.text.isEmpty) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Please fill all fields'), backgroundColor: AppTheme.error));
-                  return;
-                }
-                try {
-                  final api = context.read<ApiService>();
-                  await api.createTenant(name: nameCtrl.text.trim(), slug: slugCtrl.text.trim(), orgName: orgCtrl.text.trim(), plan: selectedPlan);
-                  Navigator.pop(ctx);
-                  _loadData();
-                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${nameCtrl.text} created'), backgroundColor: AppTheme.success));
-                } catch (e) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.error));
-                }
-              },
-              child: const Text('Create'),
-            ),
-          ],
-        ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel', style: TextStyle(color: subtextColor))),
+              ElevatedButton(
+                onPressed: () async {
+                  if (nameCtrl.text.isEmpty || slugCtrl.text.isEmpty || orgCtrl.text.isEmpty) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Please fill all fields'), backgroundColor: AppTheme.error));
+                    return;
+                  }
+                  try {
+                    final api = context.read<ApiService>();
+                    await api.createTenant(name: nameCtrl.text.trim(), slug: slugCtrl.text.trim(), orgName: orgCtrl.text.trim(), plan: selectedPlan);
+                    Navigator.pop(ctx);
+                    _loadData();
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${nameCtrl.text} created'), backgroundColor: AppTheme.success));
+                  } catch (e) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.error));
+                  }
+                },
+                child: const Text('Create'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -112,67 +120,73 @@ class _DashboardScreenState extends State<DashboardScreen> {
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: AppTheme.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Upload Document', style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600)),
-          content: SizedBox(
-            width: 400,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DropdownButtonFormField<Tenant>(
-                  decoration: const InputDecoration(labelText: 'Select Tenant'),
-                  dropdownColor: AppTheme.surface,
-                  items: _tenants.map((t) => DropdownMenuItem(value: t, child: Text(t.name, style: const TextStyle(color: AppTheme.textPrimary)))).toList(),
-                  onChanged: (v) => setDialogState(() => selectedTenant = v),
-                ),
-                const SizedBox(height: 16),
-                // File picker area
-                InkWell(
-                  onTap: () async {
-                    final result = await FilePicker.platform.pickFiles();
-                    if (result != null && result.files.isNotEmpty && selectedTenant != null) {
-                      Navigator.pop(ctx);
-                      _uploadFile(selectedTenant!, result.files.first);
-                    } else if (selectedTenant == null) {
-                      ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Please select a tenant first'), backgroundColor: AppTheme.warning));
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primary.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.primary.withOpacity(0.3), width: 1.5),
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 56, height: 56,
-                          decoration: BoxDecoration(
-                            color: AppTheme.primary.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(16),
+        builder: (ctx, setDialogState) {
+          final isDark = Theme.of(ctx).brightness == Brightness.dark;
+          final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+          final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
+          final surfaceBg = isDark ? AppTheme.surface : AppTheme.lightSurface;
+
+          return AlertDialog(
+            backgroundColor: surfaceBg,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text('Upload Document', style: TextStyle(color: textColor, fontWeight: FontWeight.w600)),
+            content: SizedBox(
+              width: 400,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<Tenant>(
+                    decoration: const InputDecoration(labelText: 'Select Tenant'),
+                    dropdownColor: surfaceBg,
+                    items: _tenants.map((t) => DropdownMenuItem(value: t, child: Text(t.name, style: TextStyle(color: textColor)))).toList(),
+                    onChanged: (v) => setDialogState(() => selectedTenant = v),
+                  ),
+                  const SizedBox(height: 16),
+                  InkWell(
+                    onTap: () async {
+                      final result = await FilePicker.platform.pickFiles();
+                      if (result != null && result.files.isNotEmpty && selectedTenant != null) {
+                        Navigator.pop(ctx);
+                        _uploadFile(selectedTenant!, result.files.first);
+                      } else if (selectedTenant == null) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Please select a tenant first'), backgroundColor: AppTheme.warning));
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppTheme.primary.withOpacity(0.3), width: 1.5),
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 56, height: 56,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Icon(Icons.cloud_upload_rounded, size: 30, color: AppTheme.primary.withOpacity(0.7)),
                           ),
-                          child: Icon(Icons.cloud_upload_rounded, size: 30, color: AppTheme.primary.withOpacity(0.7)),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text('Tap to select file', style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w500, fontSize: 14)),
-                        const SizedBox(height: 4),
-                        Text('PDF, DOCX, TXT, HTML, CSV, MD, JSON', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary.withOpacity(0.7))),
-                      ],
+                          const SizedBox(height: 12),
+                          Text('Tap to select file', style: TextStyle(color: textColor, fontWeight: FontWeight.w500, fontSize: 14)),
+                          const SizedBox(height: 4),
+                          Text('PDF, DOCX, TXT, HTML, CSV, MD, JSON', style: TextStyle(fontSize: 12, color: subtextColor.withOpacity(0.7))),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary))),
-          ],
-        ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel', style: TextStyle(color: subtextColor))),
+            ],
+          );
+        },
       ),
     );
   }
@@ -195,6 +209,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final isNarrow = MediaQuery.of(context).size.width < 600;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+    final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
+    final bgColor = isDark ? AppTheme.card : AppTheme.lightCard;
+    final borderColor = isDark ? AppTheme.border : AppTheme.lightBorder;
 
     return Padding(
       padding: EdgeInsets.all(isNarrow ? 16 : 24),
@@ -204,16 +223,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('RagChat Admin', style: TextStyle(fontSize: isNarrow ? 22 : 28, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-              IconButton(onPressed: _loadData, icon: const Icon(Icons.refresh_rounded, color: AppTheme.textSecondary)),
+              Text('RagChat Admin', style: TextStyle(fontSize: isNarrow ? 22 : 28, fontWeight: FontWeight.w700, color: textColor)),
+              IconButton(onPressed: _loadData, icon: Icon(Icons.refresh_rounded, color: subtextColor)),
             ],
           ),
           const SizedBox(height: 20),
 
           if (_loading)
-            const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+            Center(child: CircularProgressIndicator(color: AppTheme.primary))
           else ...[
-            // Stats — stack vertically on mobile, horizontal on desktop
             if (isNarrow) ...[
               StatCard(title: 'Total Tenants', value: '${_stats?['total_tenants'] ?? 0}', icon: Icons.apartment_rounded, accentColor: AppTheme.primary),
               const SizedBox(height: 12),
@@ -232,8 +250,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             const SizedBox(height: 20),
 
-            // Quick Actions — stack on mobile
-            Text('Quick Actions', style: TextStyle(fontSize: isNarrow ? 16 : 18, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+            Text('Quick Actions', style: TextStyle(fontSize: isNarrow ? 16 : 18, fontWeight: FontWeight.w600, color: textColor)),
             const SizedBox(height: 12),
             if (isNarrow) ...[
               _actionButton(Icons.add_rounded, 'Create Tenant', AppTheme.primary, _showCreateTenantDialog),
@@ -249,27 +266,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             const SizedBox(height: 24),
 
-            Text('Recent Activity', style: TextStyle(fontSize: isNarrow ? 16 : 18, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+            Text('Recent Activity', style: TextStyle(fontSize: isNarrow ? 16 : 18, fontWeight: FontWeight.w600, color: textColor)),
             const SizedBox(height: 12),
             Expanded(
               child: Container(
-                decoration: AppTheme.glassCardDecoration(),
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: borderColor, width: 1),
+                ),
                 child: _recentQueries.isEmpty
-                    ? const Center(child: Text('No recent activity', style: TextStyle(color: AppTheme.textSecondary)))
+                    ? Center(child: Text('No recent activity', style: TextStyle(color: subtextColor)))
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
                         itemCount: _recentQueries.length,
-                        separatorBuilder: (_, __) => const Divider(color: AppTheme.border, height: 1),
+                        separatorBuilder: (_, __) => Divider(color: borderColor, height: 1),
                         itemBuilder: (ctx, i) {
                           final q = _recentQueries[i];
                           return Padding(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             child: Row(
                               children: [
-                                const Icon(Icons.chat_bubble_outline_rounded, color: AppTheme.primary, size: 18),
+                                Icon(Icons.chat_bubble_outline_rounded, color: AppTheme.primary, size: 18),
                                 const SizedBox(width: 12),
-                                Expanded(child: Text(q['question'] ?? '', style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14))),
-                                Text(_timeAgo(q['created_at'] ?? ''), style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                                Expanded(child: Text(q['question'] ?? '', style: TextStyle(color: textColor, fontSize: 14))),
+                                Text(_timeAgo(q['created_at'] ?? ''), style: TextStyle(color: subtextColor, fontSize: 12)),
                               ],
                             ),
                           );

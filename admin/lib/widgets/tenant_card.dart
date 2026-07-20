@@ -14,8 +14,8 @@ class TenantCard extends StatelessWidget {
     this.onLongPress,
   });
 
-  Color get _planColor {
-    switch (tenant.plan) {
+  Color _planColor(String plan) {
+    switch (plan) {
       case 'enterprise': return AppTheme.warning;
       case 'pro': return AppTheme.primary;
       default: return AppTheme.textSecondary;
@@ -24,15 +24,21 @@ class TenantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppTheme.card : AppTheme.lightCard;
+    final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+    final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
+    final borderColor = isDark ? AppTheme.border : AppTheme.lightBorder;
+
     return GestureDetector(
       onTap: onTap,
       onLongPress: onLongPress,
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppTheme.card,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.border),
+          color: bgColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: borderColor, width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,7 +49,7 @@ class TenantCard extends StatelessWidget {
                   width: 44, height: 44,
                   decoration: BoxDecoration(
                     color: AppTheme.primary.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Center(
                     child: Text(
@@ -57,44 +63,38 @@ class TenantCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(tenant.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppTheme.textPrimary), overflow: TextOverflow.ellipsis),
-                      Text(tenant.orgName, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary), overflow: TextOverflow.ellipsis),
+                      Text(tenant.name, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: textColor), overflow: TextOverflow.ellipsis),
+                      Text(tenant.orgName, style: TextStyle(fontSize: 12, color: subtextColor), overflow: TextOverflow.ellipsis),
                     ],
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _planColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
+                    color: _planColor(tenant.plan).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Text(tenant.plan.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _planColor)),
+                  child: Text(tenant.plan.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _planColor(tenant.plan))),
                 ),
                 const SizedBox(width: 8),
-                const Icon(Icons.chevron_right_rounded, size: 20, color: AppTheme.textSecondary),
+                Icon(Icons.chevron_right_rounded, size: 20, color: subtextColor),
               ],
             ),
             const SizedBox(height: 16),
             Row(
               children: [
-                _stat(Icons.chat_bubble_outline, '${tenant.totalQueries} queries'),
+                Icon(Icons.chat_bubble_outline, size: 14, color: subtextColor),
+                const SizedBox(width: 4),
+                Text('${tenant.totalQueries} queries', style: TextStyle(fontSize: 12, color: subtextColor)),
                 const SizedBox(width: 16),
-                _stat(Icons.description_outlined, '${tenant.totalDocuments} docs'),
+                Icon(Icons.description_outlined, size: 14, color: subtextColor),
+                const SizedBox(width: 4),
+                Text('${tenant.totalDocuments} docs', style: TextStyle(fontSize: 12, color: subtextColor)),
               ],
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _stat(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: AppTheme.textSecondary),
-        const SizedBox(width: 4),
-        Text(text, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-      ],
     );
   }
 }

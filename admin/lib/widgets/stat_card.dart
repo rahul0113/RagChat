@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../main.dart';
 
 class StatCard extends StatelessWidget {
   final String title;
@@ -20,13 +21,18 @@ class StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isNarrow = MediaQuery.of(context).size.width < 600;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppTheme.card : AppTheme.lightCard;
+    final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+    final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
+    final borderColor = isDark ? AppTheme.border : AppTheme.lightBorder;
 
     return Container(
       padding: EdgeInsets.all(isNarrow ? 14 : 20),
       decoration: BoxDecoration(
-        color: AppTheme.card,
+        color: bgColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.border, width: 1),
+        border: Border.all(color: borderColor, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,11 +59,7 @@ class StatCard extends StatelessWidget {
                     ),
                     child: Text(
                       subtitle!,
-                      style: TextStyle(
-                        color: accentColor,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: TextStyle(color: accentColor, fontSize: 10, fontWeight: FontWeight.w600),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -69,20 +71,13 @@ class StatCard extends StatelessWidget {
             fit: BoxFit.scaleDown,
             child: Text(
               value,
-              style: TextStyle(
-                fontSize: isNarrow ? 22 : 28,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
-              ),
+              style: TextStyle(fontSize: isNarrow ? 22 : 28, fontWeight: FontWeight.w700, color: textColor),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             title,
-            style: TextStyle(
-              fontSize: isNarrow ? 11 : 13,
-              color: AppTheme.textSecondary,
-            ),
+            style: TextStyle(fontSize: isNarrow ? 11 : 13, color: subtextColor),
             overflow: TextOverflow.ellipsis,
           ),
         ],

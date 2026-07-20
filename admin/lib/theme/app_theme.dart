@@ -47,6 +47,16 @@ class AppTheme {
   static Color get glassSurface => const Color(0xB31E1B2E); // rgba(30, 27, 46, 0.7)
   static Color get glassModal => const Color(0xD92D2942); // rgba(45, 41, 66, 0.85)
 
+  // Light theme colors
+  static const Color lightBackground = Color(0xFFF8F7FC);
+  static const Color lightSurface = Color(0xFFFFFFFF);
+  static const Color lightCard = Color(0xFFFFFFFF);
+  static const Color lightSurfaceContainerHigh = Color(0xFFF0EFF5);
+  static const Color lightTextPrimary = Color(0xFF1A1528);
+  static const Color lightTextSecondary = Color(0xFF6B6880);
+  static const Color lightOutline = Color(0xFF908FA0);
+  static const Color lightBorder = Color(0xFFD8D6E3);
+
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
@@ -111,6 +121,75 @@ class AppTheme {
       ),
       dividerTheme: const DividerThemeData(
         color: border,
+        thickness: 1,
+        space: 0,
+      ),
+    );
+  }
+
+  static ThemeData get lightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: lightBackground,
+      primaryColor: primary,
+      colorScheme: const ColorScheme.light(
+        primary: primary,
+        secondary: secondary,
+        tertiary: tertiary,
+        surface: lightSurface,
+        error: Color(0xFFBA1A1A),
+        onPrimary: Color(0xFF1000A9),
+        onSecondary: Color(0xFF490080),
+        onTertiary: Color(0xFF003915),
+      ),
+      textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme).apply(
+        bodyColor: lightTextPrimary,
+        displayColor: lightTextPrimary,
+      ),
+      cardTheme: CardTheme(
+        color: lightCard,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: lightBorder, width: 1),
+        ),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFFF0EFF5),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: lightBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: lightBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: primary, width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        hintStyle: const TextStyle(color: lightOutline),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
+        ),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: lightBorder,
         thickness: 1,
         space: 0,
       ),
