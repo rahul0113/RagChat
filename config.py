@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
     HOST: str = "0.0.0.0"
-    PORT: int = 8000
+    PORT: int = int(os.environ.get("PORT", "8000"))
 
     # --- Groq LLM ---
     GROQ_API_KEY: str = ""
