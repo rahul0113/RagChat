@@ -33,8 +33,22 @@ class Settings(BaseSettings):
     QDRANT_API_KEY: str = ""  # empty = local instance
     QDRANT_COLLECTION_PREFIX: str = "tenant_"
 
-    # --- Database (SQLite for simplicity, swap to Postgres for scale) ---
+    # --- Database ---
+    # SQLite for dev/small deployments, PostgreSQL for production
+    # Set DATABASE_URL=postgresql://user:pass@host/db for PostgreSQL
     DATABASE_URL: str = "sqlite:///./ragchat.db"
+
+    @property
+    def is_postgresql(self) -> bool:
+        """Check if using PostgreSQL."""
+        return self.DATABASE_URL.startswith("postgresql") or self.DATABASE_URL.startswith("postgres")
+
+    @property
+    def db_connect_args(self) -> dict:
+        """Get database connection arguments based on engine."""
+        if self.is_postgresql:
+            return {}
+        return {"check_same_thread": False}
 
     # --- Document Ingestion ---
     UPLOAD_DIR: Path = Path("./uploads")
