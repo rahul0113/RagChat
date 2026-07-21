@@ -41,12 +41,23 @@ class _UploadScreenState extends State<UploadScreen> {
 
   Future<void> _pickFile() async {
     final result = await FilePicker.platform.pickFiles(
-      allowedExtensions: ['pdf', 'txt', 'md', 'csv', 'docx', 'html'],
+      allowedExtensions: ['pdf', 'txt', 'md', 'csv', 'docx', 'html', 'json'],
       type: FileType.custom,
+      withData: true,  // Important: loads file bytes into memory
     );
     if (result != null && result.files.isNotEmpty) {
+      final file = result.files.first;
+      // Verify bytes are available
+      if (file.bytes == null || file.bytes!.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not read file. Try again.'), backgroundColor: AppTheme.error),
+          );
+        }
+        return;
+      }
       setState(() {
-        _selectedFile = result.files.first;
+        _selectedFile = file;
         _uploaded = false;
       });
     }
@@ -60,22 +71,44 @@ class _UploadScreenState extends State<UploadScreen> {
     try {
       final api = context.read<ApiService>();
       final bytes = _selectedFile!.bytes;
-      if (bytes == null) {
-        throw Exception('File bytes not available');
+      if (bytes == null || bytes.isEmpty) {
+        throw Exception('File data is empty. Please select the file again.');
       }
       final filename = _selectedFile!.name;
-      await api.uploadDocument(_selectedTenantId!, bytes, filename);
+
+      // Show upload progress
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Uploading $filename (${_formatSize(bytes.length)})...'),
+            backgroundColor: AppTheme.info,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
+      final result = await api.uploadDocument(_selectedTenantId!, bytes, filename);
+
       if (mounted) {
         setState(() {
           _uploading = false;
           _uploaded = true;
         });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Uploaded ${result['filename']} (${result['chunks']} chunks)'),
+            backgroundColor: AppTheme.success,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
         setState(() => _uploading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload failed: $e'), backgroundColor: AppTheme.error),
+          SnackBar(
+            content: Text('Upload failed: ${e.toString().replaceAll('Exception: ', '')}'),
+            backgroundColor: AppTheme.error,
+          ),
         );
       }
     }
