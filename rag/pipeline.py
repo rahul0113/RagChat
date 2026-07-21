@@ -29,6 +29,7 @@ from rag.llm import (
     rewrite_query,
     generate_hyde_query,
     generate_multi_queries,
+    compress_context,
 )
 from rag.evaluation import (
     compute_retrieval_metrics,
@@ -286,12 +287,21 @@ def query_rag(
         results = results[:top_k]
     timings["rerank_ms"] = int((time.time() - rerank_start) * 1000)
 
-    # 5. Generate response
+    # 4.5 Compress context to remove irrelevant sentences
+    compress_start = time.time()
+    compressed_results = compress_context(results, question)
+    timings["compress_ms"] = int((time.time() - compress_start) * 1000)
+    _monitor("query.compress", tenant_id, extra={
+        "original_chars": sum(len(r.get("text", "")) for r in results),
+        "compressed_chars": sum(len(r.get("text", "")) for r in compressed_results),
+    })
+
+    # 5. Generate response (use compressed context for token efficiency)
     llm_start = time.time()
     if structured:
         response = generate_structured_response(
             query=question,
-            context_chunks=results,
+            context_chunks=compressed_results,
             org_name=org_name,
             chat_history=chat_history,
         )
@@ -320,7 +330,7 @@ def query_rag(
     else:
         answer = generate_response(
             query=question,
-            context_chunks=results,
+            context_chunks=compressed_results,
             org_name=org_name,
             chat_history=chat_history,
         )

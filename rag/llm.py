@@ -8,6 +8,7 @@ Improvements:
 - Grounded answer validation
 - Confidence estimation
 """
+import re
 import json
 import logging
 from datetime import datetime, timezone
@@ -213,6 +214,54 @@ def generate_hyde_query(query: str) -> str:
     except Exception as e:
         logger.warning(f"HyDE generation failed, using original query: {e}")
         return query
+
+
+def compress_context(chunks: list[dict], query: str) -> list[dict]:
+    """
+    Compress context chunks by removing irrelevant sentences.
+
+    For each chunk, uses a quick heuristic to keep only sentences that
+    are relevant to the query. This reduces token usage while preserving
+    key information.
+    """
+    if not chunks:
+        return chunks
+
+    query_words = set(query.lower().split())
+    compressed = []
+
+    for chunk in chunks:
+        text = chunk.get("text", "")
+        if len(text) < 200:  # Short chunks don't need compression
+            compressed.append(chunk)
+            continue
+
+        # Split into sentences
+        sentences = re.split(r'(?<=[.!?])\s+', text)
+        scored_sentences = []
+
+        for sentence in sentences:
+            sentence_lower = sentence.lower()
+            # Score based on query word overlap
+            sentence_words = set(sentence_lower.split())
+            if query_words and sentence_words:
+                overlap = len(query_words & sentence_words) / len(query_words)
+            else:
+                overlap = 0
+            scored_sentences.append((overlap, sentence))
+
+        # Keep sentences with score > 0.1, or all if none match
+        relevant = [s for score, s in scored_sentences if score > 0.1]
+        if not relevant:
+            relevant = [s for _, s in scored_sentences[:3]]  # Keep first 3 sentences
+
+        compressed_chunk = chunk.copy()
+        compressed_chunk["text"] = " ".join(relevant)
+        compressed_chunk["compressed"] = True
+        compressed_chunk["original_length"] = len(text)
+        compressed.append(compressed_chunk)
+
+    return compressed
 
 
 def _sanitize_query(query: str) -> str:
