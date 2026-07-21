@@ -588,57 +588,65 @@ class _ChatScreenState extends State<ChatScreen> {
         color: surfaceBg,
         border: Border(top: BorderSide(color: borderColor)),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Expanded(
-            child: Container(
-              constraints: const BoxConstraints(maxHeight: 120),
-              decoration: BoxDecoration(
-                color: borderColor.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: TextField(
-                controller: _messageController,
-                style: TextStyle(color: textColor, fontSize: 14),
-                maxLines: null,
-                keyboardType: TextInputType.multiline,
-                textInputAction: TextInputAction.send,
-                decoration: InputDecoration(
-                  hintText: _selectedTenantSlug != null
-                      ? 'Ask about your documents...'
-                      : 'Select a tenant first...',
-                  hintStyle: TextStyle(color: textColor.withOpacity(0.4)),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: Container(
+                constraints: const BoxConstraints(maxHeight: 120),
+                decoration: BoxDecoration(
+                  color: borderColor.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                onSubmitted: (_) => _sendMessage(),
+                child: TextField(
+                  controller: _messageController,
+                  style: TextStyle(color: textColor, fontSize: 14),
+                  maxLines: null,
+                  keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.newline,
+                  decoration: InputDecoration(
+                    hintText: _selectedTenantSlug != null
+                        ? 'Ask about your documents...'
+                        : 'Select a tenant first...',
+                    hintStyle: TextStyle(color: textColor.withOpacity(0.4)),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: (_isTyping || _selectedTenantSlug == null) ? null : _sendMessage,
-            child: Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: (_isTyping || _selectedTenantSlug == null)
-                    ? borderColor
-                    : AppTheme.primary,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.send_rounded, size: 18,
-                color: (_isTyping || _selectedTenantSlug == null)
-                    ? textColor.withOpacity(0.3)
-                    : Colors.white,
+            const SizedBox(width: 8),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _isTyping ? null : _sendMessage,
+                customBorder: const CircleBorder(),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: _canSend ? AppTheme.primary : borderColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _isTyping ? Icons.hourglass_top_rounded : Icons.send_rounded,
+                    size: 18,
+                    color: _canSend ? Colors.white : textColor.withOpacity(0.3),
+                  ),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+
+  bool get _canSend => !_isTyping && _messageController.text.trim().isNotEmpty;
 }
 
 class _ChatMessage {
