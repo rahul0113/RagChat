@@ -274,6 +274,95 @@ async def get_job_status(job_id: str):
     return job
 
 
+@router.get("/metrics")
+async def metrics():
+    """
+    Prometheus-compatible metrics endpoint.
+
+    Returns system metrics in a format that can be scraped by Prometheus
+    or read by monitoring tools.
+    """
+    import time
+    from rag.vector_store import get_client, get_tenant_stats
+    from tenants.models import get_tenant_count
+
+    # Get system metrics
+    tenant_count = get_tenant_count()
+
+    # Get Qdrant metrics
+    qdrant_metrics = {}
+    total_vectors = 0
+    try:
+        client = get_client()
+        collections = client.get_collections()
+        for col in collections.collections:
+            try:
+                info = client.get_collection(col.name)
+                qdrant_metrics[col.name] = {
+                    "vectors": info.vectors_count or 0,
+                    "points": info.points_count or 0,
+                }
+                total_vectors += info.vectors_count or 0
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    # Get cache metrics
+    cache_metrics = {}
+    try:
+        from rag.cache import get_cache_stats
+        cache_metrics = get_cache_stats()
+    except Exception:
+        pass
+
+    # Get job metrics
+    job_metrics = {}
+    try:
+        from rag.jobs import _jobs
+        job_metrics = {
+            "total_jobs": len(_jobs),
+            "completed": sum(1 for j in _jobs.values() if j.get("status") == "completed"),
+            "failed": sum(1 for j in _jobs.values() if j.get("status") == "failed"),
+        }
+    except Exception:
+        pass
+
+    # Get BM25 cache metrics
+    bm25_metrics = {}
+    try:
+        from rag.hybrid_search import _bm25_cache
+        bm25_metrics = {"cached_tenants": len(_bm25_cache)}
+    except Exception:
+        pass
+
+    # Get embedding cache metrics
+    embedding_metrics = {}
+    try:
+        from rag.embeddings import _embedding_cache
+        embedding_metrics = {"cached_embeddings": len(_embedding_cache)}
+    except Exception:
+        pass
+
+    return {
+        "system": {
+            "timestamp": time.time(),
+            "uptime": time.time(),
+        },
+        "tenants": {
+            "total": tenant_count,
+        },
+        "qdrant": {
+            "total_vectors": total_vectors,
+            "collections": qdrant_metrics,
+        },
+        "cache": cache_metrics,
+        "jobs": job_metrics,
+        "bm25_cache": bm25_metrics,
+        "embedding_cache": embedding_metrics,
+    }
+
+
 @router.post("/admin/tenants/{tenant_id}/upload")
 async def admin_upload_document(
     tenant_id: str,

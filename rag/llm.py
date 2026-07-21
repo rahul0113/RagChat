@@ -67,6 +67,19 @@ Question: {query}
 Hypothetical document excerpt:"""
 
 
+HOP_DECOMPOSITION_PROMPT = """You are a query decomposition assistant. Break down a complex question into simpler sub-questions that can be answered independently.
+
+Rules:
+- Each sub-question should be answerable from a single document
+- The sub-questions together should help answer the original question
+- Return ONLY the sub-questions, one per line
+- Generate 2-4 sub-questions maximum
+
+Complex question: {query}
+
+Sub-questions:"""
+
+
 MULTI_QUERY_PROMPT = """Generate 3 different search queries that would help find documents containing the answer to this question.
 
 Each query should approach the topic from a different angle. Be specific and factual.
@@ -134,6 +147,56 @@ def rewrite_query(query: str) -> str:
     except Exception as e:
         logger.warning(f"Query rewriting failed, using original: {e}")
         return query
+
+
+def decompose_complex_query(query: str) -> list[str]:
+    """
+    Decompose a complex question into simpler sub-questions for multi-hop retrieval.
+
+    Multi-hop retrieval breaks down questions that require information from
+    multiple documents into sub-questions that can each be answered from
+    a single document.
+    """
+    # Skip decomposition for simple queries
+    if len(query.split()) <= 5:
+        return [query]
+
+    client = get_groq_client()
+
+    try:
+        response = client.chat.completions.create(
+            model=settings.GROQ_MODEL,
+            messages=[
+                {"role": "system", "content": "Decompose questions into sub-questions. Return only the sub-questions."},
+                {"role": "user", "content": HOP_DECOMPOSITION_PROMPT.format(query=query)},
+            ],
+            temperature=0.3,
+            max_tokens=300,
+        )
+        raw = response.choices[0].message.content.strip()
+
+        # Parse sub-questions
+        sub_questions = []
+        for line in raw.split('\n'):
+            line = line.strip()
+            if not line:
+                continue
+            # Remove numbering
+            for prefix in ['1.', '2.', '3.', '4.', '5.', '-', '*']:
+                if line.startswith(prefix):
+                    line = line[len(prefix):].strip()
+                    break
+            if line:
+                sub_questions.append(line)
+
+        if sub_questions:
+            logger.info(f"Query decomposed: '{query[:50]}' -> {len(sub_questions)} sub-questions")
+            return sub_questions
+        return [query]
+
+    except Exception as e:
+        logger.warning(f"Query decomposition failed: {e}")
+        return [query]
 
 
 def generate_multi_queries(query: str, num_queries: int = 3) -> list[str]:
