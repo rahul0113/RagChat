@@ -79,6 +79,16 @@ class FakeSettings:
     CRAWL_TIMEOUT = 30
     BACKEND_URL = "http://localhost:8000"
 
+    @property
+    def is_postgresql(self):
+        return self.DATABASE_URL.startswith("postgresql") or self.DATABASE_URL.startswith("postgres")
+
+    @property
+    def db_connect_args(self):
+        if self.is_postgresql:
+            return {}
+        return {"check_same_thread": False}
+
 _fake_settings = FakeSettings()
 
 fake_config = MagicMock()

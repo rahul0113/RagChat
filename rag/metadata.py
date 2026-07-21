@@ -4,7 +4,7 @@ Single source of truth for metadata structure — used by pipeline, ingestion,
 crawler, OCR, and vector store.
 """
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def build_document_id() -> str:
@@ -39,7 +39,7 @@ def build_chunk_metadata(
         "page_number": page_number,
         "section_heading": section_heading,
         "language": language,
-        "upload_timestamp": upload_timestamp or datetime.utcnow().isoformat(),
+        "upload_timestamp": upload_timestamp or datetime.now(timezone.utc).isoformat(),
     }
     if extra:
         meta.update(extra)

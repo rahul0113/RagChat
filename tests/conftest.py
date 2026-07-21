@@ -62,6 +62,16 @@ class FakeSettings:
     CRAWL_DELAY: float = 0.5
     CRAWL_TIMEOUT: int = 30
 
+    @property
+    def is_postgresql(self) -> bool:
+        return self.DATABASE_URL.startswith("postgresql") or self.DATABASE_URL.startswith("postgres")
+
+    @property
+    def db_connect_args(self) -> dict:
+        if self.is_postgresql:
+            return {}
+        return {"check_same_thread": False}
+
     class Config:
         env_file = ".env"
 
