@@ -69,6 +69,7 @@ class _AdminShellState extends State<AdminShell> with SingleTickerProviderStateM
   bool _showChat = false;
   bool _showUpload = false;
   bool _fabOpen = false;
+  bool _keyboardVisible = false;
   late AnimationController _fabController;
   late Animation<double> _fabAnimation;
 
@@ -188,6 +189,14 @@ class _AdminShellState extends State<AdminShell> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
+    final keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+
+    // Auto-close FAB when keyboard opens
+    if (keyboardOpen && _fabOpen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _fabOpen) _closeFab();
+      });
+    }
 
     return Scaffold(
       body: Stack(
@@ -226,11 +235,14 @@ class _AdminShellState extends State<AdminShell> with SingleTickerProviderStateM
         title: Text(_currentTitle()),
         automaticallyImplyLeading: false,
       ) : null,
+      // Hide FAB when keyboard is open on mobile
       floatingActionButton: isMobile
-          ? Padding(
-              padding: const EdgeInsets.only(bottom: 72),
-              child: _buildFabMenu(),
-            )
+          ? (keyboardOpen
+              ? null
+              : Padding(
+                  padding: const EdgeInsets.only(bottom: 72),
+                  child: _buildFabMenu(),
+                ))
           : _buildDesktopFab(),
     );
   }
