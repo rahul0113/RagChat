@@ -79,47 +79,52 @@ class _TenantsScreenState extends State<TenantsScreen> {
           final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
           final surfaceBg = isDark ? AppTheme.surface : AppTheme.lightSurface;
 
+          final keyboardHeight = MediaQuery.of(ctx).viewInsets.bottom;
+
           return AlertDialog(
             backgroundColor: surfaceBg,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: Text('Create Tenant', style: TextStyle(color: textColor, fontWeight: FontWeight.w600)),
-            content: SizedBox(
-              width: 400,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: nameCtrl,
-                      decoration: const InputDecoration(labelText: 'Name', hintText: 'e.g. ABC College'),
-                      onChanged: (v) {
-                        slugCtrl.text = v.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '-').replaceAll(RegExp(r'-+'), '-');
-                        setDialogState(() {});
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: slugCtrl,
-                      decoration: const InputDecoration(labelText: 'Slug (URL-safe)', hintText: 'e.g. abc-college'),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: orgCtrl,
-                      decoration: const InputDecoration(labelText: 'Organization Name', hintText: 'e.g. ABC College of Engineering'),
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      value: selectedPlan,
-                      dropdownColor: surfaceBg,
-                      decoration: const InputDecoration(labelText: 'Plan'),
-                      items: const [
-                        DropdownMenuItem(value: 'free', child: Text('Free')),
-                        DropdownMenuItem(value: 'pro', child: Text('Pro')),
-                        DropdownMenuItem(value: 'enterprise', child: Text('Enterprise')),
-                      ],
-                      onChanged: (v) => setDialogState(() => selectedPlan = v ?? 'free'),
-                    ),
-                  ],
+            content: Padding(
+              padding: EdgeInsets.only(bottom: keyboardHeight),
+              child: SizedBox(
+                width: 400,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: nameCtrl,
+                        decoration: const InputDecoration(labelText: 'Name', hintText: 'e.g. ABC College'),
+                        onChanged: (v) {
+                          slugCtrl.text = v.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '-').replaceAll(RegExp(r'-+'), '-');
+                          setDialogState(() {});
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: slugCtrl,
+                        decoration: const InputDecoration(labelText: 'Slug (URL-safe)', hintText: 'e.g. abc-college'),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: orgCtrl,
+                        decoration: const InputDecoration(labelText: 'Organization Name', hintText: 'e.g. ABC College of Engineering'),
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: selectedPlan,
+                        dropdownColor: surfaceBg,
+                        decoration: const InputDecoration(labelText: 'Plan'),
+                        items: const [
+                          DropdownMenuItem(value: 'free', child: Text('Free')),
+                          DropdownMenuItem(value: 'pro', child: Text('Pro')),
+                          DropdownMenuItem(value: 'enterprise', child: Text('Enterprise')),
+                        ],
+                        onChanged: (v) => setDialogState(() => selectedPlan = v ?? 'free'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

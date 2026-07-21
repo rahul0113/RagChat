@@ -15,7 +15,8 @@ from api.routes import router
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s | %(levelname)-7s | %(name)s | %(message)s",
+    format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -28,7 +29,7 @@ def create_app() -> FastAPI:
         version=settings.APP_VERSION,
     )
 
-    # CORS — allow all origins for HF Spaces + widget embedding
+    # CORS — allow all origins for widget embedding
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -49,12 +50,47 @@ def create_app() -> FastAPI:
     def startup():
         logger.info("Initializing database...")
         init_db()
-        logger.info("RagChat is ready.")
 
-    # Health check endpoint (required for HF Spaces)
+        # Run schema migrations
+        try:
+            from migrate import run_migrations
+            run_migrations()
+        except Exception as e:
+            logger.warning(f"Migration failed: {e}")
+
+        # Start background workers
+        try:
+            from rag.jobs import start_workers
+            start_workers()
+        except Exception as e:
+            logger.warning(f"Background workers failed to start: {e}")
+
+        # Setup structured logging
+        try:
+            from rag.monitoring import setup_structured_logging
+            setup_structured_logging()
+        except Exception:
+            pass
+
+        logger.info(f"RagChat v{settings.APP_VERSION} is ready.")
+
+    @app.on_event("shutdown")
+    def shutdown():
+        try:
+            from rag.jobs import stop_workers
+            stop_workers()
+        except Exception:
+            pass
+        logger.info("RagChat shutting down.")
+
+    # Health check endpoint
     @app.get("/api/health")
     def health():
-        return {"status": "healthy", "version": settings.APP_VERSION}
+        try:
+            from rag.monitoring import get_health_check
+            return get_health_check()
+        except Exception:
+            return {"status": "healthy", "version": settings.APP_VERSION}
 
     @app.get("/", response_class=HTMLResponse)
     def root():
@@ -67,10 +103,14 @@ def create_app() -> FastAPI:
             <h3>Endpoints:</h3>
             <ul>
                 <li><code>POST /api/chat/{slug}</code> — Chat with a tenant's knowledge base</li>
+                <li><code>POST /api/chat/{slug}/stream</code> — Streaming chat</li>
                 <li><code>GET /api/widget/{slug}/config</code> — Widget configuration</li>
                 <li><code>POST /api/admin/tenants</code> — Create tenant</li>
                 <li><code>GET /api/admin/tenants</code> — List tenants</li>
                 <li><code>POST /api/admin/tenants/{id}/upload</code> — Upload documents</li>
+                <li><code>DELETE /api/admin/tenants/{id}/documents/{doc_id}</code> — Delete document</li>
+                <li><code>POST /api/admin/tenants/{id}/crawl</code> — Crawl website</li>
+                <li><code>GET /api/admin/analytics/summary</code> — Analytics</li>
                 <li><code>GET /api/health</code> — Health check</li>
                 <li><code>GET /docs</code> — API documentation</li>
             </ul>

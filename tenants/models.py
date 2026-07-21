@@ -5,7 +5,7 @@ Each client is a separate tenant with isolated data.
 import uuid
 import json
 from datetime import datetime
-from sqlalchemy import create_engine, Column, String, DateTime, Text, Boolean, Integer
+from sqlalchemy import create_engine, Column, String, DateTime, Text, Boolean, Integer, Float, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from config import get_settings
@@ -38,6 +38,37 @@ class Tenant(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class Document(Base):
+    __tablename__ = "documents"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = Column(String, ForeignKey("tenants.id"), nullable=False, index=True)
+    filename = Column(String, nullable=False)
+    original_filename = Column(String, nullable=False)
+    file_size = Column(Integer, default=0)  # bytes
+    file_type = Column(String, nullable=False)  # extension
+    chunk_count = Column(Integer, default=0)
+    character_count = Column(Integer, default=0)
+    status = Column(String, default="active")  # active | deleted
+    ingestion_status = Column(String, default="pending")  # pending | processing | completed | failed
+    failure_reason = Column(Text, nullable=True)
+    processing_started_at = Column(DateTime, nullable=True)
+    processing_completed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class UnansweredQuestion(Base):
+    __tablename__ = "unanswered_questions"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = Column(String, index=True, nullable=False)
+    question = Column(Text, nullable=False)
+    fallback_reason = Column(String, nullable=False)  # insufficient_context | no_results | low_confidence
+    source_chunks_found = Column(Integer, default=0)
+    top_score = Column(Float, default=0.0)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
 class QueryLog(Base):
     __tablename__ = "query_logs"
 
@@ -48,6 +79,13 @@ class QueryLog(Base):
     sources = Column(Text, default="[]")  # JSON array
     chunks_found = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    # Performance timing (milliseconds)
+    retrieval_time_ms = Column(Integer, default=0)
+    embedding_time_ms = Column(Integer, default=0)
+    llm_time_ms = Column(Integer, default=0)
+    total_time_ms = Column(Integer, default=0)
+    cache_hit = Column(Boolean, default=False)
 
 
 def init_db():

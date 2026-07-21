@@ -25,3 +25,16 @@ markdown
 
 # Database
 sqlalchemy
+
+# Hybrid Search
+rank-bm25
+
+# OCR
+pytesseract
+Pillow
+
+# Web Crawling
+httpx
+
+# Language Detection
+langdetect

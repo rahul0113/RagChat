@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RagChat</string>
+    <string name="widget_chat_description">Quick access to chat. Tap to open the chat screen instantly.</string>
+    <string name="widget_upload_description">Upload documents quickly. Tap to open the upload screen.</string>
+    <string name="widget_status_description">RagChat dashboard with quick actions for chat and upload.</string>
+    <string name="quick_settings_tile_label">RagChat</string>
+</resources>

@@ -11,7 +11,7 @@ from functools import lru_cache
 class Settings(BaseSettings):
     # --- App ---
     APP_NAME: str = "RagChat"
-    APP_VERSION: str = "1.0.0"
+    APP_VERSION: str = "2.0.0"
     DEBUG: bool = False
     HOST: str = "0.0.0.0"
     PORT: int = int(os.environ.get("PORT", "8000"))
@@ -23,8 +23,8 @@ class Settings(BaseSettings):
     GROQ_MAX_TOKENS: int = 2048
 
     # --- Embeddings (local, no API needed) ---
-    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
-    EMBEDDING_DIMENSION: int = 384
+    EMBEDDING_MODEL: str = "BAAI/bge-large-en-v1.5"
+    EMBEDDING_DIMENSION: int = 1024
     EMBEDDING_BATCH_SIZE: int = 32
 
     # --- Qdrant Vector DB ---
@@ -51,6 +51,46 @@ class Settings(BaseSettings):
 
     # --- Backend URL (for widget embed code generation) ---
     BACKEND_URL: str = ""  # Set to your deployed URL, e.g. https://ragchat-app.onrender.com
+
+    # --- Hybrid Search ---
+    HYBRID_SEARCH_ENABLED: bool = True
+    HYBRID_ALPHA: float = 0.7  # 1.0 = pure vector, 0.0 = pure keyword
+    BM25_K1: float = 1.5
+    BM25_B: float = 0.75
+
+    # --- Reranking ---
+    RERANKING_ENABLED: bool = True
+    RERANKER_MODEL: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    RERANK_TOP_K: int = 20  # retrieve this many before reranking
+    RERANK_FINAL_K: int = 5  # return this many after reranking
+
+    # --- Query Rewriting ---
+    QUERY_REWRITING_ENABLED: bool = True
+
+    # --- Semantic Cache ---
+    SEMANTIC_CACHE_ENABLED: bool = True
+    SEMANTIC_CACHE_THRESHOLD: float = 0.92  # cosine similarity threshold
+    SEMANTIC_CACHE_TTL: int = 3600  # seconds
+    SEMANTIC_CACHE_PERSIST: bool = True  # persist to disk
+    SEMANTIC_CACHE_DIR: str = "./cache"  # directory for cache files
+
+    # --- OCR ---
+    OCR_ENABLED: bool = True
+    OCR_ENGINE: str = "tesseract"  # tesseract | easyocr
+
+    # --- Web Crawler ---
+    CRAWL_MAX_DEPTH: int = 3
+    CRAWL_MAX_PAGES: int = 100
+    CRAWL_DELAY: float = 0.5  # seconds between requests
+    CRAWL_TIMEOUT: int = 30  # seconds per request
+
+    # --- Background Jobs ---
+    BACKGROUND_JOBS_ENABLED: bool = True
+    MAX_WORKERS: int = 2
+
+    # --- Monitoring ---
+    LOG_LEVEL: str = "INFO"
+    STRUCTURED_LOGGING: bool = True
 
     class Config:
         env_file = ".env"

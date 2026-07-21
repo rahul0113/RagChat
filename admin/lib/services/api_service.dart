@@ -91,6 +91,19 @@ class ApiService extends ChangeNotifier {
     );
   }
 
+  // --- Chat ---
+  Future<Map<String, dynamic>> chat(String slug, String question, {bool structured = true}) async {
+    final res = await http.post(
+      Uri.parse('$_baseUrl/chat/$slug'),
+      headers: _headers,
+      body: jsonEncode({'question': question, 'structured': structured}),
+    );
+    if (res.statusCode == 200) {
+      return jsonDecode(res.body);
+    }
+    throw Exception('Chat failed: ${res.body}');
+  }
+
   // --- Documents ---
   Future<Map<String, dynamic>> uploadDocument(String tenantId, List<int> bytes, String filename) async {
     var request = http.MultipartRequest(

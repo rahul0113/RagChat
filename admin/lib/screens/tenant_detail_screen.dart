@@ -19,6 +19,7 @@ class TenantDetailScreen extends StatefulWidget {
 class _TenantDetailScreenState extends State<TenantDetailScreen> {
   TenantDetail? _tenant;
   bool _loading = true;
+  Color _selectedThemeColor = AppTheme.primary;
 
   @override
   void initState() {
@@ -145,7 +146,7 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
@@ -153,10 +154,18 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(width: 8),
-            Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 13)),
+            Icon(icon, color: color, size: 18),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 12),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ),
           ],
         ),
       ),
@@ -169,6 +178,14 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
       AppTheme.success, AppTheme.warning, const Color(0xFFEC4899),
       const Color(0xFF14B8A6), AppTheme.error,
     ];
+
+    // Initialize selected color from tenant's current theme
+    final currentHex = _tenant?.theme['primary_color'];
+    if (currentHex != null && currentHex is String && currentHex.startsWith('#')) {
+      try {
+        _selectedThemeColor = Color(int.parse('FF${currentHex.substring(1)}', radix: 16));
+      } catch (_) {}
+    }
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -183,15 +200,30 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
           Wrap(
             spacing: 12,
             runSpacing: 12,
-            children: colors.map((c) => GestureDetector(
-              onTap: () => _updateTheme(c),
-              child: Container(
-                width: 40, height: 40,
-                decoration: BoxDecoration(color: c, shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white24, width: 2),
+            children: colors.map((c) {
+              final isSelected = c.value == _selectedThemeColor.value;
+              return GestureDetector(
+                onTap: () {
+                  setState(() => _selectedThemeColor = c);
+                  _updateTheme(c);
+                },
+                child: Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(
+                    color: c,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? Colors.white : Colors.white24,
+                      width: isSelected ? 3 : 2,
+                    ),
+                    boxShadow: isSelected ? [
+                      BoxShadow(color: c.withOpacity(0.5), blurRadius: 8, spreadRadius: 1),
+                    ] : null,
+                  ),
+                  child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 18) : null,
                 ),
-              ),
-            )).toList(),
+              );
+            }).toList(),
           ),
           const SizedBox(height: 16),
           Text('Live Preview', style: TextStyle(fontSize: 13, color: subtextColor)),
@@ -207,10 +239,10 @@ class _TenantDetailScreenState extends State<TenantDetailScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppTheme.primary.withOpacity(0.15),
+                    color: _selectedThemeColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text('Hello! How can I help?', style: TextStyle(fontSize: 13, color: textColor)),
+                  child: Text('Hello! How can I help?', style: TextStyle(fontSize: 13, color: _selectedThemeColor)),
                 ),
               ],
             ),
