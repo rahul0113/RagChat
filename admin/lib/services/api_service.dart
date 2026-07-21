@@ -92,11 +92,18 @@ class ApiService extends ChangeNotifier {
   }
 
   // --- Chat ---
-  Future<Map<String, dynamic>> chat(String slug, String question, {bool structured = true}) async {
+  Future<Map<String, dynamic>> chat(String slug, String question, {
+    bool structured = false,
+    List<Map<String, dynamic>>? chatHistory,
+  }) async {
     final res = await http.post(
       Uri.parse('$_baseUrl/chat/$slug'),
       headers: _headers,
-      body: jsonEncode({'question': question, 'structured': structured}),
+      body: jsonEncode({
+        'query': question,
+        'structured': structured,
+        'chat_history': chatHistory,
+      }),
     );
     if (res.statusCode == 200) {
       return jsonDecode(res.body);
