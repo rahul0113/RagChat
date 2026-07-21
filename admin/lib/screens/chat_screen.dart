@@ -20,6 +20,7 @@ class _ChatScreenState extends State<ChatScreen> {
   String? _selectedTenantSlug;
   String? _selectedTenantId;
   String? _tenantName;
+  Color _tenantColor = AppTheme.primary;
   int _documentCount = 0;
   List<Map<String, dynamic>> _tenants = [];
 
@@ -42,12 +43,30 @@ class _ChatScreenState extends State<ChatScreen> {
       final tenants = await api.getTenants();
       if (tenants.isNotEmpty && mounted) {
         setState(() {
-          _tenants = tenants.map((t) => {'id': t.id, 'slug': t.slug, 'name': t.name}).toList();
+          _tenants = tenants.map((t) => {
+            'id': t.id, 'slug': t.slug, 'name': t.name,
+            'color': t.theme['primary_color'] ?? '#C0C1FF',
+          }).toList();
           _selectedTenantSlug = tenants.first.slug;
           _selectedTenantId = tenants.first.id;
           _tenantName = tenants.first.name;
         });
+        _loadTenantTheme();
         _loadTenantDocs();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _loadTenantTheme() async {
+    if (_selectedTenantId == null) return;
+    final api = context.read<ApiService>();
+    try {
+      final tenant = await api.getTenant(_selectedTenantId!);
+      if (mounted && tenant.theme['primary_color'] != null) {
+        final hex = tenant.theme['primary_color'] as String;
+        if (hex.startsWith('#')) {
+          setState(() => _tenantColor = Color(int.parse('FF${hex.substring(1)}', radix: 16)));
+        }
       }
     } catch (_) {}
   }
@@ -64,13 +83,19 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _selectTenant(Map<String, dynamic> tenant) {
+    final hex = tenant['color'] as String? ?? '#C0C1FF';
+    final color = hex.startsWith('#')
+        ? Color(int.parse('FF${hex.substring(1)}', radix: 16))
+        : AppTheme.primary;
     setState(() {
       _selectedTenantSlug = tenant['slug'];
       _selectedTenantId = tenant['id'];
       _tenantName = tenant['name'];
+      _tenantColor = color;
       _messages.clear();
       _chatHistory.clear();
     });
+    _loadTenantTheme();
     _loadTenantDocs();
   }
 
@@ -102,34 +127,23 @@ class _ChatScreenState extends State<ChatScreen> {
 
         setState(() {
           _messages.add(_ChatMessage(
-            text: answer,
-            isUser: false,
-            sources: sources,
-            timings: timings,
-            qualitySignals: qualitySignals,
+            text: answer, isUser: false,
+            sources: sources, timings: timings, qualitySignals: qualitySignals,
           ));
           _isTyping = false;
         });
 
-        // Add to chat history for context
         _chatHistory.add({'role': 'user', 'content': text});
         _chatHistory.add({'role': 'assistant', 'content': answer});
-
-        // Keep history manageable (last 20 exchanges)
         if (_chatHistory.length > 40) {
           _chatHistory.removeRange(0, _chatHistory.length - 40);
         }
-
         _scrollToBottom();
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _messages.add(_ChatMessage(
-            text: 'Error: ${e.toString()}',
-            isUser: false,
-            isError: true,
-          ));
+          _messages.add(_ChatMessage(text: 'Error: ${e.toString()}', isUser: false, isError: true));
           _isTyping = false;
         });
       }
@@ -160,7 +174,6 @@ class _ChatScreenState extends State<ChatScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
     final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
-    final bgColor = isDark ? AppTheme.background : AppTheme.lightBackground;
     final surfaceBg = isDark ? AppTheme.surface : AppTheme.lightSurface;
     final borderColor = isDark ? AppTheme.border : AppTheme.lightBorder;
 
@@ -181,16 +194,15 @@ class _ChatScreenState extends State<ChatScreen> {
                   onPressed: widget.onBack,
                   color: textColor,
                 ),
-              Icon(Icons.chat_bubble_outline, color: AppTheme.primary, size: 20),
+              Icon(Icons.chat_bubble_outline, color: _tenantColor, size: 20),
               const SizedBox(width: 8),
               Text('RAG Chat', style: TextStyle(
                 fontSize: 18, fontWeight: FontWeight.w600, color: textColor,
               )),
               const Spacer(),
-              // Tenant selector dropdown
-              _buildTenantDropdown(surfaceBg, textColor, borderColor),
+              // Tenant selector button
+              _buildTenantSelector(surfaceBg, textColor, subtextColor, borderColor),
               const SizedBox(width: 8),
-              // Clear chat button
               if (_messages.isNotEmpty)
                 IconButton(
                   icon: Icon(Icons.delete_outline, size: 18, color: subtextColor),
@@ -206,21 +218,22 @@ class _ChatScreenState extends State<ChatScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             decoration: BoxDecoration(
-              color: AppTheme.primary.withOpacity(0.05),
+              color: _tenantColor.withOpacity(0.05),
               border: Border(bottom: BorderSide(color: borderColor)),
             ),
             child: Row(
               children: [
-                Icon(Icons.business_rounded, size: 14, color: AppTheme.primary),
-                const SizedBox(width: 6),
+                Container(
+                  width: 8, height: 8,
+                  decoration: BoxDecoration(color: _tenantColor, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 8),
                 Text(_tenantName ?? _selectedTenantSlug!, style: TextStyle(
-                  fontSize: 12, color: AppTheme.primary, fontWeight: FontWeight.w500,
+                  fontSize: 12, color: _tenantColor, fontWeight: FontWeight.w600,
                 )),
                 const SizedBox(width: 12),
-                Icon(Icons.description_outlined, size: 14, color: subtextColor),
-                const SizedBox(width: 4),
-                Text('$_documentCount vectors indexed', style: TextStyle(
-                  fontSize: 12, color: subtextColor,
+                Text('$_documentCount vectors', style: TextStyle(
+                  fontSize: 11, color: subtextColor,
                 )),
                 const Spacer(),
                 Container(
@@ -246,9 +259,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   padding: const EdgeInsets.all(16),
                   itemCount: _messages.length + (_isTyping ? 1 : 0),
                   itemBuilder: (context, index) {
-                    if (index == _messages.length) {
-                      return _buildTypingIndicator(subtextColor);
-                    }
+                    if (index == _messages.length) return _buildTypingIndicator(subtextColor);
                     return _buildMessageBubble(_messages[index], textColor, subtextColor, surfaceBg, borderColor);
                   },
                 ),
@@ -260,33 +271,93 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildTenantDropdown(Color surfaceBg, Color textColor, Color borderColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        color: surfaceBg,
+  Widget _buildTenantSelector(Color surfaceBg, Color textColor, Color subtextColor, Color borderColor) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _showTenantPicker,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: borderColor),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: _tenantColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: _tenantColor.withOpacity(0.3)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 8, height: 8,
+                decoration: BoxDecoration(color: _tenantColor, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _tenantName ?? 'Select Tenant',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _tenantColor),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: _tenantColor),
+            ],
+          ),
+        ),
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _selectedTenantSlug,
-          isDense: true,
-          dropdownColor: surfaceBg,
-          icon: Icon(Icons.expand_more, size: 16, color: textColor),
-          style: TextStyle(color: textColor, fontSize: 12),
-          items: _tenants.map((t) {
-            return DropdownMenuItem<String>(
-              value: t['slug'] as String?,
-              child: Text(t['name'] as String? ?? '', style: TextStyle(fontSize: 12)),
-            );
-          }).toList(),
-          onChanged: (slug) {
-            if (slug != null) {
-              final tenant = _tenants.firstWhere((t) => t['slug'] == slug);
-              _selectTenant(tenant);
-            }
-          },
+    );
+  }
+
+  void _showTenantPicker() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceBg = isDark ? AppTheme.surface : AppTheme.lightSurface;
+    final textColor = isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+    final borderColor = isDark ? AppTheme.border : AppTheme.lightBorder;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: surfaceBg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Select Tenant', style: TextStyle(
+              fontSize: 16, fontWeight: FontWeight.w700, color: textColor,
+            )),
+            const SizedBox(height: 12),
+            ..._tenants.map((t) {
+              final hex = t['color'] as String? ?? '#C0C1FF';
+              final color = hex.startsWith('#')
+                  ? Color(int.parse('FF${hex.substring(1)}', radix: 16))
+                  : AppTheme.primary;
+              final isSelected = t['slug'] == _selectedTenantSlug;
+              return ListTile(
+                leading: Container(
+                  width: 32, height: 32,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(isSelected ? 0.2 : 0.1),
+                    shape: BoxShape.circle,
+                    border: isSelected ? Border.all(color: color, width: 2) : null,
+                  ),
+                  child: Icon(Icons.business_rounded, size: 16, color: color),
+                ),
+                title: Text(t['name'] as String? ?? '', style: TextStyle(
+                  fontSize: 14, fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: textColor,
+                )),
+                trailing: isSelected
+                    ? Icon(Icons.check_circle_rounded, color: color, size: 20)
+                    : Icon(Icons.chevron_right_rounded, color: borderColor, size: 20),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _selectTenant(t);
+                },
+              );
+            }),
+            const SizedBox(height: 8),
+          ],
         ),
       ),
     );
@@ -302,10 +373,10 @@ class _ChatScreenState extends State<ChatScreen> {
             Container(
               width: 80, height: 80,
               decoration: BoxDecoration(
-                color: AppTheme.primary.withOpacity(0.1),
+                color: _tenantColor.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.auto_awesome, size: 36, color: AppTheme.primary),
+              child: Icon(Icons.auto_awesome, size: 36, color: _tenantColor),
             ),
             const SizedBox(height: 20),
             Text('RAG-Powered Assistant', style: TextStyle(
@@ -373,10 +444,10 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: AppTheme.primary.withOpacity(0.1),
+            color: _tenantColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Text(text, style: TextStyle(fontSize: 13, color: AppTheme.primary)),
+          child: Text(text, style: TextStyle(fontSize: 13, color: _tenantColor)),
         ),
       ),
     );
@@ -397,7 +468,7 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             SizedBox(
               width: 16, height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary),
+              child: CircularProgressIndicator(strokeWidth: 2, color: _tenantColor),
             ),
             const SizedBox(width: 10),
             Text('Searching knowledge base...', style: TextStyle(color: subtextColor, fontSize: 13)),
@@ -417,12 +488,11 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Column(
           crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
-            // Message bubble
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: isUser
-                    ? AppTheme.primary
+                    ? _tenantColor
                     : msg.isError
                         ? AppTheme.error.withOpacity(0.1)
                         : surfaceBg,
@@ -441,7 +511,6 @@ class _ChatScreenState extends State<ChatScreen> {
                     color: isUser ? Colors.white : (msg.isError ? AppTheme.error : textColor),
                     fontSize: 14, height: 1.6,
                   )),
-                  // Show timing info for AI responses
                   if (!isUser && !msg.isError && msg.timings != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
@@ -450,18 +519,14 @@ class _ChatScreenState extends State<ChatScreen> {
                         children: [
                           Icon(Icons.speed, size: 12, color: subtextColor.withOpacity(0.5)),
                           const SizedBox(width: 4),
-                          Text(
-                            '${msg.timings!['total_ms'] ?? 0}ms',
-                            style: TextStyle(fontSize: 10, color: subtextColor.withOpacity(0.5)),
-                          ),
+                          Text('${msg.timings!['total_ms'] ?? 0}ms',
+                            style: TextStyle(fontSize: 10, color: subtextColor.withOpacity(0.5))),
                           if (msg.qualitySignals?['search_mode'] != null) ...[
                             const SizedBox(width: 8),
                             Icon(Icons.search, size: 12, color: subtextColor.withOpacity(0.5)),
                             const SizedBox(width: 4),
-                            Text(
-                              msg.qualitySignals!['search_mode'],
-                              style: TextStyle(fontSize: 10, color: subtextColor.withOpacity(0.5)),
-                            ),
+                            Text(msg.qualitySignals!['search_mode'],
+                              style: TextStyle(fontSize: 10, color: subtextColor.withOpacity(0.5))),
                           ],
                         ],
                       ),
@@ -469,8 +534,6 @@ class _ChatScreenState extends State<ChatScreen> {
                 ],
               ),
             ),
-
-            // Sources section
             if (!isUser && !msg.isError && msg.sources != null && (msg.sources as List).isNotEmpty)
               _buildSourcesSection(msg.sources as List, surfaceBg, borderColor, subtextColor),
           ],
@@ -493,10 +556,10 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.library_books, size: 14, color: AppTheme.primary),
+              Icon(Icons.library_books, size: 14, color: _tenantColor),
               const SizedBox(width: 6),
               Text('Sources (${sources.length})', style: TextStyle(
-                fontSize: 11, color: AppTheme.primary, fontWeight: FontWeight.w600,
+                fontSize: 11, color: _tenantColor, fontWeight: FontWeight.w600,
               )),
             ],
           ),
@@ -535,7 +598,7 @@ class _ChatScreenState extends State<ChatScreen> {
             children: [
               Expanded(
                 child: Text(docName, style: TextStyle(
-                  fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.primary,
+                  fontSize: 11, fontWeight: FontWeight.w600, color: _tenantColor,
                 )),
               ),
               if (score > 0)
@@ -555,10 +618,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
-                [
-                  if (page != null) 'Page $page',
-                  if (section != null) section,
-                ].join(' • '),
+                [if (page != null) 'Page $page', if (section != null) section].join(' • '),
                 style: TextStyle(fontSize: 10, color: subtextColor),
               ),
             ),
@@ -629,7 +689,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: _canSend ? AppTheme.primary : borderColor,
+                    color: _canSend ? _tenantColor : borderColor,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
