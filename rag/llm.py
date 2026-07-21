@@ -66,6 +66,18 @@ Question: {query}
 Hypothetical document excerpt:"""
 
 
+MULTI_QUERY_PROMPT = """Generate 3 different search queries that would help find documents containing the answer to this question.
+
+Each query should approach the topic from a different angle. Be specific and factual.
+
+Question: {query}
+
+Return ONLY the 3 queries, one per line, prefixed with numbers:
+1. [query1]
+2. [query2]
+3. [query3]"""
+
+
 STRUCTURED_CITATION_PROMPT = """You are a helpful AI assistant for {org_name}.
 Today's date is {current_date}.
 You answer questions based on the provided context documents.
@@ -121,6 +133,54 @@ def rewrite_query(query: str) -> str:
     except Exception as e:
         logger.warning(f"Query rewriting failed, using original: {e}")
         return query
+
+
+def generate_multi_queries(query: str, num_queries: int = 3) -> list[str]:
+    """
+    Generate multiple query variations for better retrieval.
+
+    Multi-query retrieval generates several different phrasings of the original query,
+    retrieves documents for each, then merges and deduplicates results.
+    This catches documents that use different terminology for the same concept.
+    """
+    client = get_groq_client()
+
+    try:
+        response = client.chat.completions.create(
+            model=settings.GROQ_MODEL,
+            messages=[
+                {"role": "system", "content": "Generate search queries. Return only numbered queries."},
+                {"role": "user", "content": MULTI_QUERY_PROMPT.format(query=query)},
+            ],
+            temperature=0.7,
+            max_tokens=300,
+        )
+        raw = response.choices[0].message.content.strip()
+
+        # Parse numbered queries
+        queries = []
+        for line in raw.split('\n'):
+            line = line.strip()
+            if not line:
+                continue
+            # Remove numbering
+            for prefix in ['1.', '2.', '3.', '4.', '5.', '-', '*']:
+                if line.startswith(prefix):
+                    line = line[len(prefix):].strip()
+                    break
+            if line:
+                queries.append(line)
+
+        # Ensure we have at least the original query
+        if not queries:
+            queries = [query]
+
+        logger.info(f"Multi-query generated {len(queries)} queries from '{query[:50]}'")
+        return queries[:num_queries]
+
+    except Exception as e:
+        logger.warning(f"Multi-query generation failed: {e}")
+        return [query]
 
 
 def generate_hyde_query(query: str) -> str:

@@ -157,11 +157,14 @@ async def chat_stream(slug: str, request: ChatRequest):
     if not tenant.is_active:
         raise HTTPException(status_code=403, detail="This chat is currently disabled")
 
+    # Validate query
+    query = _validate_query(request.query)
+
     increment_queries(tenant.id)
 
     generator = query_rag_stream(
         tenant_id=tenant.id,
-        question=request.query,
+        question=query,
         org_name=tenant.org_name,
         top_k=request.top_k,
         chat_history=request.chat_history,

@@ -28,6 +28,7 @@ from rag.llm import (
     stream_response,
     rewrite_query,
     generate_hyde_query,
+    generate_multi_queries,
 )
 from rag.evaluation import (
     compute_retrieval_metrics,
@@ -211,6 +212,33 @@ def query_rag(
     else:
         results = search_similar(tenant_id, query_vector, top_k=search_k)
     timings["search_ms"] = int((time.time() - search_start) * 1000)
+
+    # 3.5 If few results, try multi-query retrieval
+    if len(results) < 3:
+        _monitor("query.multi_query", tenant_id, extra={"trigger": "few_results", "count": len(results)})
+        multi_queries = generate_multi_queries(rewritten_query)
+        seen_texts = {r.get("text", "")[:200] for r in results}
+
+        for mq in multi_queries[1:]:  # Skip first (same as rewritten_query)
+            try:
+                mq_vector = embed_query(mq)
+                if settings.HYBRID_SEARCH_ENABLED:
+                    from rag.hybrid_search import hybrid_search
+                    mq_results = hybrid_search(tenant_id, mq, mq_vector, top_k=top_k)
+                else:
+                    mq_results = search_similar(tenant_id, mq_vector, top_k=top_k)
+
+                for r in mq_results:
+                    text_key = r.get("text", "")[:200]
+                    if text_key not in seen_texts:
+                        results.append(r)
+                        seen_texts.add(text_key)
+            except Exception as e:
+                logger.warning(f"Multi-query search failed for '{mq[:50]}': {e}")
+
+        # Re-sort by score and take top_k
+        results.sort(key=lambda x: x.get("score", 0), reverse=True)
+        results = results[:search_k]
 
     if not results:
         total_ms = int((time.time() - total_start) * 1000)
