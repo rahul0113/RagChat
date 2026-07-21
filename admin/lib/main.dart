@@ -226,7 +226,12 @@ class _AdminShellState extends State<AdminShell> with SingleTickerProviderStateM
         title: Text(_currentTitle()),
         automaticallyImplyLeading: false,
       ) : null,
-      floatingActionButton: isMobile ? _buildFabMenu() : _buildDesktopFab(),
+      floatingActionButton: isMobile
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 72),
+              child: _buildFabMenu(),
+            )
+          : _buildDesktopFab(),
     );
   }
 
@@ -356,6 +361,7 @@ class _AdminShellState extends State<AdminShell> with SingleTickerProviderStateM
           backgroundColor: AppTheme.primary,
           foregroundColor: Colors.white,
           elevation: 4,
+          shape: const CircleBorder(),
           child: AnimatedRotation(
             turns: _fabOpen ? 0.125 : 0,
             duration: const Duration(milliseconds: 250),
