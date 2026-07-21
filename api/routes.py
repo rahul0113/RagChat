@@ -261,12 +261,28 @@ async def admin_delete_tenant(tenant_id: str):
 # ============================================
 # DOCUMENT MANAGEMENT
 # ============================================
+@router.get("/admin/jobs/{job_id}")
+async def get_job_status(job_id: str):
+    """Get the status of a background job."""
+    from rag.jobs import get_job_status as _get_job_status
+    job = _get_job_status(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job
+
+
 @router.post("/admin/tenants/{tenant_id}/upload")
 async def admin_upload_document(
     tenant_id: str,
     file: UploadFile = File(...),
+    background: bool = True,
 ):
-    """Upload and ingest a document for a tenant."""
+    """
+    Upload a document for a tenant.
+
+    If background=true (default), ingestion runs in background and returns immediately.
+    If background=false, ingestion runs synchronously (slower but returns full result).
+    """
     tenant = get_tenant_by_id(tenant_id)
     if not tenant:
         raise HTTPException(status_code=404, detail="Tenant not found")
@@ -299,49 +315,86 @@ async def admin_upload_document(
     if ext not in settings.SUPPORTED_FORMATS:
         raise HTTPException(status_code=400, detail=f"Unsupported format: {ext}. Supported: {', '.join(settings.SUPPORTED_FORMATS)}")
 
-    # Ingest
-    file_obj = io.BytesIO(contents)
-    new_doc_id = None
-    try:
-        # Check for existing document with same filename — replace it
-        old_doc_id = replace_document(tenant.id, safe_filename, None)
+    # Check for existing document with same filename — replace it
+    old_doc_id = replace_document(tenant.id, safe_filename, None)
 
-        result = ingest_document(tenant.id, file_obj, safe_filename)
-        new_doc_id = result["document_id"]
+    if background:
+        # Async ingestion via job queue
+        from rag.jobs import submit_job
+        import uuid as uuid_mod
 
-        # Delete old document vectors if replacing
-        if old_doc_id:
-            from rag.vector_store import delete_document_vectors
-            delete_document_vectors(tenant.id, old_doc_id)
-            logger.info(f"Replaced old document {old_doc_id} with {new_doc_id}")
+        document_id = str(uuid_mod.uuid4())
+        file_obj = io.BytesIO(contents)
 
-        # Store document record with completed status
+        # Create pending document record
         add_document(
             tenant_id=tenant.id,
-            filename=result["filename"],
+            filename=safe_filename,
             original_filename=original_filename,
             file_size=len(contents),
             file_type=ext,
-            chunk_count=result["chunks"],
-            character_count=result["characters"],
-            document_id=new_doc_id,
-            ingestion_status="completed",
+            chunk_count=0,
+            character_count=0,
+            document_id=document_id,
+            ingestion_status="processing",
+        )
+
+        # Submit background job
+        job_id = submit_job(
+            job_type="ingest_document",
+            tenant_id=tenant.id,
+            document_id=document_id,
+            filename=safe_filename,
+            file_obj=file_obj,
         )
 
         return {
-            "status": "ingested",
-            "document_id": new_doc_id,
-            "filename": result["filename"],
-            "chunks": result["chunks"],
-            "characters": result["characters"],
-            "file_hash": file_hash,
+            "status": "processing",
+            "document_id": document_id,
+            "job_id": job_id,
+            "filename": safe_filename,
+            "message": "Document is being processed in the background. Use GET /admin/jobs/{job_id} to check status.",
         }
-    except Exception as e:
-        logger.error(f"Ingestion error: {e}")
-        # Mark as failed if we have a document_id
-        if new_doc_id:
-            update_document_ingestion_status(new_doc_id, "failed", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+    else:
+        # Synchronous ingestion
+        file_obj = io.BytesIO(contents)
+        new_doc_id = None
+        try:
+            result = ingest_document(tenant.id, file_obj, safe_filename)
+            new_doc_id = result["document_id"]
+
+            # Delete old document vectors if replacing
+            if old_doc_id:
+                from rag.vector_store import delete_document_vectors
+                delete_document_vectors(tenant.id, old_doc_id)
+                logger.info(f"Replaced old document {old_doc_id} with {new_doc_id}")
+
+            # Store document record with completed status
+            add_document(
+                tenant_id=tenant.id,
+                filename=result["filename"],
+                original_filename=original_filename,
+                file_size=len(contents),
+                file_type=ext,
+                chunk_count=result["chunks"],
+                character_count=result["characters"],
+                document_id=new_doc_id,
+                ingestion_status="completed",
+            )
+
+            return {
+                "status": "ingested",
+                "document_id": new_doc_id,
+                "filename": result["filename"],
+                "chunks": result["chunks"],
+                "characters": result["characters"],
+                "file_hash": file_hash,
+            }
+        except Exception as e:
+            logger.error(f"Ingestion error: {e}")
+            if new_doc_id:
+                update_document_ingestion_status(new_doc_id, "failed", str(e))
+            raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/admin/tenants/{tenant_id}/documents")

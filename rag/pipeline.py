@@ -27,6 +27,7 @@ from rag.llm import (
     generate_structured_response,
     stream_response,
     rewrite_query,
+    generate_hyde_query,
 )
 from rag.evaluation import (
     compute_retrieval_metrics,
@@ -186,9 +187,14 @@ def query_rag(
         "rewritten": rewritten_query[:60] if rewrite_used else "(unchanged)",
     })
 
-    # 2. Embed the query
+    # 2. Generate HyDE query for better retrieval
+    hyde_query = generate_hyde_query(rewritten_query)
+    hyde_used = hyde_query != rewritten_query
+    _monitor("query.hyde", tenant_id, extra={"hyde_used": hyde_used})
+
+    # 3. Embed the HyDE query (or original if HyDE failed)
     embed_start = time.time()
-    query_vector = embed_query(rewritten_query)
+    query_vector = embed_query(hyde_query)
     timings["embedding_ms"] = int((time.time() - embed_start) * 1000)
 
     # 3. Search for relevant chunks (hybrid if enabled)

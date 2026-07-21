@@ -57,6 +57,15 @@ Rules:
 Original query: {query}"""
 
 
+HYDE_PROMPT = """You are a hypothetical document writer. Write a short, factual document excerpt that would contain the answer to the given question.
+
+Write 2-3 sentences that would appear in a document answering this question. Be factual and specific. Do not add any commentary.
+
+Question: {query}
+
+Hypothetical document excerpt:"""
+
+
 STRUCTURED_CITATION_PROMPT = """You are a helpful AI assistant for {org_name}.
 Today's date is {current_date}.
 You answer questions based on the provided context documents.
@@ -112,6 +121,68 @@ def rewrite_query(query: str) -> str:
     except Exception as e:
         logger.warning(f"Query rewriting failed, using original: {e}")
         return query
+
+
+def generate_hyde_query(query: str) -> str:
+    """
+    Generate a hypothetical document excerpt for HyDE retrieval.
+
+    HyDE works by generating a hypothetical answer, then using that answer's
+    embedding to find similar real documents. This often retrieves better results
+    than using the raw query embedding.
+    """
+    # Skip HyDE for very short queries
+    if len(query.split()) <= 2:
+        return query
+
+    client = get_groq_client()
+
+    try:
+        response = client.chat.completions.create(
+            model=settings.GROQ_MODEL,
+            messages=[
+                {"role": "system", "content": "Write factual document excerpts. No commentary."},
+                {"role": "user", "content": HYDE_PROMPT.format(query=query)},
+            ],
+            temperature=0.7,
+            max_tokens=200,
+        )
+        hyde_text = response.choices[0].message.content.strip()
+        logger.info(f"HyDE generated: '{query}' -> '{hyde_text[:80]}...'")
+        return hyde_text
+    except Exception as e:
+        logger.warning(f"HyDE generation failed, using original query: {e}")
+        return query
+
+
+def _sanitize_query(query: str) -> str:
+    """
+    Sanitize query to prevent prompt injection.
+
+    Wraps user input in clear delimiters and strips common injection patterns.
+    """
+    # Strip common injection patterns
+    injection_patterns = [
+        "ignore previous instructions",
+        "ignore all previous",
+        "disregard previous",
+        "forget everything",
+        "new instructions:",
+        "system prompt:",
+        "you are now",
+        "act as",
+        "pretend you are",
+    ]
+
+    query_lower = query.lower()
+    for pattern in injection_patterns:
+        if pattern in query_lower:
+            logger.warning(f"Potential prompt injection detected: '{pattern}'")
+            # Remove the injection attempt
+            query = query.replace(pattern, "").replace(pattern.upper(), "")
+
+    # Wrap in delimiters to make it clear this is user input
+    return f"<USER_QUESTION>\n{query.strip()}\n</USER_QUESTION>"
 
 
 def _estimate_tokens(text: str) -> int:
@@ -211,7 +282,8 @@ def generate_response(
         for msg in chat_history[-10:]:
             messages.append({"role": msg["role"], "content": msg["content"]})
 
-    messages.append({"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}"})
+    safe_query = _sanitize_query(query)
+    messages.append({"role": "user", "content": f"Context:\n{context}\n\n{safe_query}"})
 
     try:
         response = client.chat.completions.create(
@@ -251,8 +323,9 @@ def generate_structured_response(
         for msg in chat_history[-10:]:
             messages.append({"role": msg["role"], "content": msg["content"]})
 
+    safe_query = _sanitize_query(query)
     user_message = STRUCTURED_CITATION_PROMPT.format(
-        org_name=org_name, context=context, query=query, current_date=current_date,
+        org_name=org_name, context=context, query=safe_query, current_date=current_date,
     )
     messages.append({"role": "user", "content": user_message})
 
@@ -310,7 +383,8 @@ def stream_response(
         for msg in chat_history[-10:]:
             messages.append({"role": msg["role"], "content": msg["content"]})
 
-    messages.append({"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}"})
+    safe_query = _sanitize_query(query)
+    messages.append({"role": "user", "content": f"Context:\n{context}\n\n{safe_query}"})
 
     try:
         stream = client.chat.completions.create(
