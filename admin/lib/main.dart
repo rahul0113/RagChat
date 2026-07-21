@@ -330,6 +330,9 @@ class _AdminShellState extends State<AdminShell> with SingleTickerProviderStateM
                               width: 48,
                               height: 48,
                               alignment: Alignment.center,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                              ),
                               child: Icon(
                                 item.icon,
                                 color: (item.index == -1 || item.index == -2) ? Colors.white : textColor,
