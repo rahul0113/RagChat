@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'services/api_service.dart';
 import 'services/auth_service.dart';
@@ -24,13 +25,16 @@ final ValueNotifier<Color> accentColorNotifier = ValueNotifier(AppTheme.primary)
 // Navigation channel for Android widgets/tiles
 const _navChannel = MethodChannel('com.ragchat.admin/navigation');
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const RagChatAdmin());
+  final prefs = await SharedPreferences.getInstance();
+  final hasCompletedOnboarding = prefs.getBool('onboarding_complete') ?? false;
+  runApp(RagChatAdmin(hasCompletedOnboarding: hasCompletedOnboarding));
 }
 
 class RagChatAdmin extends StatelessWidget {
-  const RagChatAdmin({super.key});
+  final bool hasCompletedOnboarding;
+  const RagChatAdmin({super.key, required this.hasCompletedOnboarding});
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +52,7 @@ class RagChatAdmin extends StatelessWidget {
             themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
             darkTheme: AppTheme.darkTheme,
             theme: AppTheme.lightTheme,
-            home: const LandingScreen(),
+            home: hasCompletedOnboarding ? const AdminShell() : const LandingScreen(),
           );
         },
       ),

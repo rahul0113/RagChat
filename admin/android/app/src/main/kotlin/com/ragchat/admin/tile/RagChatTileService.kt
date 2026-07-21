@@ -1,10 +1,10 @@
 package com.ragchat.admin.tile
 
+import android.app.PendingIntent
 import android.content.Intent
 import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import androidx.annotation.RequiresApi
 import com.ragchat.admin.MainActivity
 
 /**
@@ -12,7 +12,6 @@ import com.ragchat.admin.MainActivity
  * Appears in the notification shade alongside Wi-Fi, Bluetooth, etc.
  * Tapping opens the chat screen directly.
  */
-@RequiresApi(Build.VERSION_CODES.N)
 class RagChatTileService : TileService() {
 
     override fun onStartListening() {
@@ -27,13 +26,20 @@ class RagChatTileService : TileService() {
     override fun onClick() {
         super.onClick()
 
-        // Open the app to chat screen
         val intent = Intent(this, MainActivity::class.java).apply {
             action = Intent.ACTION_VIEW
             putExtra("destination", "chat")
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
-        startActivityAndCollapse(intent)
+
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        startActivityAndCollapse(pendingIntent)
     }
 
     override fun onStopListening() {
