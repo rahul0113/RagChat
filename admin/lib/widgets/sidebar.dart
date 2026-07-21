@@ -5,11 +5,13 @@ import '../main.dart';
 class Sidebar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onSelected;
+  final VoidCallback? onChat;
 
   const Sidebar({
     super.key,
     required this.selectedIndex,
     required this.onSelected,
+    this.onChat,
   });
 
   static const _icons = [
@@ -17,6 +19,7 @@ class Sidebar extends StatelessWidget {
     Icons.apartment_rounded,
     Icons.description_rounded,
     Icons.analytics_rounded,
+    Icons.chat_bubble_rounded,
     Icons.settings_rounded,
   ];
 
@@ -25,6 +28,7 @@ class Sidebar extends StatelessWidget {
     'Tenants',
     'Documents',
     'Analytics',
+    'Chat',
     'Settings',
   ];
 
@@ -70,7 +74,7 @@ class Sidebar extends StatelessWidget {
               ),
               Divider(color: borderColor, height: 1),
               const SizedBox(height: 8),
-              ...List.generate(_icons.length, (i) => _navItem(i, accentColor, textColor, subtextColor, outlineColor, borderColor)),
+              ...List.generate(_icons.length, (i) => _navItem(i, accentColor, textColor, subtextColor, outlineColor)),
               const Spacer(),
               Container(
                 margin: const EdgeInsets.all(12),
@@ -100,7 +104,7 @@ class Sidebar extends StatelessWidget {
     );
   }
 
-  Widget _navItem(int index, Color accentColor, Color textColor, Color subtextColor, Color outlineColor, Color borderColor) {
+  Widget _navItem(int index, Color accentColor, Color textColor, Color subtextColor, Color outlineColor) {
     final isSelected = selectedIndex == index;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
@@ -119,7 +123,18 @@ class Sidebar extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         dense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-        onTap: () => onSelected(index),
+        onTap: () {
+          if (index == 4) {
+            // Chat item
+            onChat?.call();
+          } else {
+            // Map sidebar index to page index:
+            // Sidebar: 0=Dashboard, 1=Tenants, 2=Docs, 3=Analytics, 4=Chat, 5=Settings
+            // Pages:   0=Dashboard, 1=Tenants, 2=Docs, 3=Analytics,            4=Settings
+            final pageIndex = (index > 4) ? index - 1 : index;
+            onSelected(pageIndex);
+          }
+        },
       ),
     );
   }

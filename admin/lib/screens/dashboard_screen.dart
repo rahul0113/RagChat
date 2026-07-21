@@ -8,7 +8,8 @@ import '../widgets/stat_card.dart';
 import '../theme/app_theme.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final VoidCallback? onOpenChat;
+  const DashboardScreen({super.key, this.onOpenChat});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -227,7 +228,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('RagChat Admin', style: TextStyle(fontSize: isNarrow ? 22 : 28, fontWeight: FontWeight.w700, color: textColor)),
+              InkWell(
+                onTap: _loadData,
+                borderRadius: BorderRadius.circular(8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32, height: 32,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: [AppTheme.primary, AppTheme.primary.withOpacity(0.7)]),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 18),
+                    ),
+                    const SizedBox(width: 10),
+                    Text('RagChat Admin', style: TextStyle(fontSize: isNarrow ? 22 : 28, fontWeight: FontWeight.w700, color: textColor)),
+                  ],
+                ),
+              ),
               IconButton(onPressed: _loadData, icon: Icon(Icons.refresh_rounded, color: subtextColor)),
             ],
           ),
@@ -260,12 +278,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _actionButton(Icons.add_rounded, 'Create Tenant', AppTheme.primary, _showCreateTenantDialog),
               const SizedBox(height: 8),
               _actionButton(Icons.upload_file_rounded, 'Upload Document', AppTheme.success, _showUploadDialog),
+              const SizedBox(height: 8),
+              _actionButton(Icons.chat_bubble_rounded, 'Open Chat', AppTheme.info, widget.onOpenChat ?? () {}),
             ] else
               Row(
                 children: [
                   Expanded(child: _actionButton(Icons.add_rounded, 'Create Tenant', AppTheme.primary, _showCreateTenantDialog)),
                   const SizedBox(width: 16),
                   Expanded(child: _actionButton(Icons.upload_file_rounded, 'Upload Document', AppTheme.success, _showUploadDialog)),
+                  const SizedBox(width: 16),
+                  Expanded(child: _actionButton(Icons.chat_bubble_rounded, 'Open Chat', AppTheme.info, widget.onOpenChat ?? () {})),
                 ],
               ),
             const SizedBox(height: 24),
