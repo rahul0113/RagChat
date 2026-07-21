@@ -86,7 +86,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: Text('Create Tenant', style: TextStyle(color: textColor, fontWeight: FontWeight.w600)),
             content: Padding(
-              padding: EdgeInsets.only(bottom: keyboardHeight),
+              padding: EdgeInsets.only(bottom: keyboardHeight > 0 ? keyboardHeight * 0.5 : 0),
               child: SizedBox(
                 width: 400,
                 child: SingleChildScrollView(
