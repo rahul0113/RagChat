@@ -4,6 +4,7 @@ Supports structured citations, query rewriting, and streaming.
 """
 import json
 import logging
+from datetime import datetime, timezone
 from groq import Groq
 from config import get_settings
 
@@ -24,6 +25,8 @@ def get_groq_client() -> Groq:
 
 
 SYSTEM_PROMPT = """You are a helpful AI assistant for {org_name}.
+Today's date is {current_date}.
+
 You answer questions accurately based on the provided context documents.
 If the context doesn't contain enough information to answer, say so honestly.
 Be concise, professional, and helpful.
@@ -45,6 +48,7 @@ Original query: {query}"""
 
 
 STRUCTURED_CITATION_PROMPT = """You are a helpful AI assistant for {org_name}.
+Today's date is {current_date}.
 You answer questions based on the provided context documents.
 
 IMPORTANT: You MUST respond with a JSON object in this exact format, nothing else:
@@ -122,9 +126,10 @@ def generate_response(
     """Generate a response using Groq with RAG context."""
     client = get_groq_client()
     context = _build_context(context_chunks)
+    current_date = datetime.now(timezone.utc).strftime("%A, %B %d, %Y")
 
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT.format(org_name=org_name)},
+        {"role": "system", "content": SYSTEM_PROMPT.format(org_name=org_name, current_date=current_date)},
     ]
 
     if chat_history:
@@ -174,8 +179,9 @@ def generate_structured_response(
         for msg in chat_history[-10:]:
             messages.append({"role": msg["role"], "content": msg["content"]})
 
+    current_date = datetime.now(timezone.utc).strftime("%A, %B %d, %Y")
     user_message = STRUCTURED_CITATION_PROMPT.format(
-        org_name=org_name, context=context, query=query,
+        org_name=org_name, context=context, query=query, current_date=current_date,
     )
     messages.append({"role": "user", "content": user_message})
 
