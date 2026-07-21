@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -14,7 +14,7 @@ class UploadScreen extends StatefulWidget {
 }
 
 class _UploadScreenState extends State<UploadScreen> {
-  File? _selectedFile;
+  PlatformFile? _selectedFile;
   String? _selectedTenantId;
   bool _uploading = false;
   bool _uploaded = false;
@@ -44,9 +44,9 @@ class _UploadScreenState extends State<UploadScreen> {
       allowedExtensions: ['pdf', 'txt', 'md', 'csv', 'docx', 'html'],
       type: FileType.custom,
     );
-    if (result != null && result.files.single.path != null) {
+    if (result != null && result.files.isNotEmpty) {
       setState(() {
-        _selectedFile = File(result.files.single.path!);
+        _selectedFile = result.files.first;
         _uploaded = false;
       });
     }
@@ -59,8 +59,11 @@ class _UploadScreenState extends State<UploadScreen> {
 
     try {
       final api = context.read<ApiService>();
-      final bytes = await _selectedFile!.readAsBytes();
-      final filename = _selectedFile!.path.split('/').last;
+      final bytes = _selectedFile!.bytes;
+      if (bytes == null) {
+        throw Exception('File bytes not available');
+      }
+      final filename = _selectedFile!.name;
       await api.uploadDocument(_selectedTenantId!, bytes, filename);
       if (mounted) {
         setState(() {
@@ -76,6 +79,12 @@ class _UploadScreenState extends State<UploadScreen> {
         );
       }
     }
+  }
+
+  String _formatSize(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1048576) return '${(bytes / 1024).round()} KB';
+    return '${(bytes / 1048576).round()} MB';
   }
 
   @override
@@ -136,8 +145,8 @@ class _UploadScreenState extends State<UploadScreen> {
                     isExpanded: true,
                     dropdownColor: surfaceBg,
                     underline: const SizedBox(),
-                    items: _tenants.map((t) => DropdownMenuItem(
-                      value: t['id'],
+                    items: _tenants.map<DropdownMenuItem<String>>((t) => DropdownMenuItem<String>(
+                      value: t['id'] as String?,
                       child: Text(t['name'] ?? 'Unknown', style: TextStyle(color: textColor)),
                     )).toList(),
                     onChanged: (v) => setState(() => _selectedTenantId = v),
@@ -184,13 +193,13 @@ class _UploadScreenState extends State<UploadScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      _selectedFile!.path.split('/').last,
+                                      _selectedFile!.name,
                                       style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 14),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      '${(_selectedFile!.lengthSync() / 1024).round()} KB',
+                                      _formatSize(_selectedFile!.size),
                                       style: TextStyle(color: subtextColor, fontSize: 12),
                                     ),
                                   ],

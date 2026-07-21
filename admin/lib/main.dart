@@ -1,4 +1,4 @@
-import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -92,8 +92,8 @@ class _AdminShellState extends State<AdminShell> {
       }
     });
 
-    // Check for initial destination from cold start
-    if (Platform.isAndroid) {
+    // Check for initial destination from cold start (Android only, not web)
+    if (!kIsWeb) {
       _navChannel.invokeMethod<String>('getInitialDestination').then((dest) {
         if (dest != null && dest != 'dashboard') {
           WidgetsBinding.instance.addPostFrameCallback((_) {
