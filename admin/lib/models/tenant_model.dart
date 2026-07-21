@@ -4,6 +4,7 @@ class Tenant {
   final String slug;
   final String orgName;
   final String plan;
+  final Map<String, dynamic> theme;
   final int totalQueries;
   final int totalDocuments;
   final String createdAt;
@@ -14,6 +15,7 @@ class Tenant {
     required this.slug,
     required this.orgName,
     required this.plan,
+    this.theme = const {},
     this.totalQueries = 0,
     this.totalDocuments = 0,
     required this.createdAt,
@@ -25,6 +27,7 @@ class Tenant {
     slug: json['slug'] ?? '',
     orgName: json['org_name'] ?? '',
     plan: json['plan'] ?? 'free',
+    theme: json['theme'] is Map ? Map<String, dynamic>.from(json['theme']) : {},
     totalQueries: json['total_queries'] ?? 0,
     totalDocuments: json['total_documents'] ?? 0,
     createdAt: json['created_at'] ?? '',
