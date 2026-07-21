@@ -232,6 +232,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -256,51 +257,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
               IconButton(onPressed: _loadData, icon: Icon(Icons.refresh_rounded, color: subtextColor)),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
+          // Stats — use Row on narrow too but with compact cards
           if (_loading)
             Center(child: CircularProgressIndicator(color: AppTheme.primary))
           else ...[
-            if (isNarrow) ...[
-              StatCard(title: 'Total Tenants', value: '${_stats?['total_tenants'] ?? 0}', icon: Icons.apartment_rounded, accentColor: AppTheme.primary),
-              const SizedBox(height: 12),
-              StatCard(title: 'Total Queries', value: '${_stats?['total_queries'] ?? 0}', icon: Icons.chat_bubble_rounded, accentColor: AppTheme.info),
-              const SizedBox(height: 12),
-              StatCard(title: 'Documents', value: '${_stats?['total_documents'] ?? 0}', icon: Icons.description_rounded, accentColor: AppTheme.success),
-            ] else
-              Row(
-                children: [
-                  Expanded(child: StatCard(title: 'Total Tenants', value: '${_stats?['total_tenants'] ?? 0}', icon: Icons.apartment_rounded, accentColor: AppTheme.primary)),
-                  const SizedBox(width: 16),
-                  Expanded(child: StatCard(title: 'Total Queries', value: '${_stats?['total_queries'] ?? 0}', icon: Icons.chat_bubble_rounded, accentColor: AppTheme.info)),
-                  const SizedBox(width: 16),
-                  Expanded(child: StatCard(title: 'Documents', value: '${_stats?['total_documents'] ?? 0}', icon: Icons.description_rounded, accentColor: AppTheme.success)),
-                ],
-              ),
-            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(child: StatCard(title: 'Tenants', value: '${_stats?['total_tenants'] ?? 0}', icon: Icons.apartment_rounded, accentColor: AppTheme.primary)),
+                const SizedBox(width: 8),
+                Expanded(child: StatCard(title: 'Queries', value: '${_stats?['total_queries'] ?? 0}', icon: Icons.chat_bubble_rounded, accentColor: AppTheme.info)),
+                const SizedBox(width: 8),
+                Expanded(child: StatCard(title: 'Docs', value: '${_stats?['total_documents'] ?? 0}', icon: Icons.description_rounded, accentColor: AppTheme.success)),
+              ],
+            ),
+            const SizedBox(height: 16),
 
-            Text('Quick Actions', style: TextStyle(fontSize: isNarrow ? 16 : 18, fontWeight: FontWeight.w600, color: textColor)),
-            const SizedBox(height: 12),
-            if (isNarrow) ...[
-              _actionButton(Icons.add_rounded, 'Create Tenant', AppTheme.primary, _showCreateTenantDialog),
-              const SizedBox(height: 8),
-              _actionButton(Icons.upload_file_rounded, 'Upload Document', AppTheme.success, _showUploadDialog),
-              const SizedBox(height: 8),
-              _actionButton(Icons.chat_bubble_rounded, 'Open Chat', AppTheme.info, widget.onOpenChat ?? () {}),
-            ] else
-              Row(
-                children: [
-                  Expanded(child: _actionButton(Icons.add_rounded, 'Create Tenant', AppTheme.primary, _showCreateTenantDialog)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _actionButton(Icons.upload_file_rounded, 'Upload Document', AppTheme.success, _showUploadDialog)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _actionButton(Icons.chat_bubble_rounded, 'Open Chat', AppTheme.info, widget.onOpenChat ?? () {})),
-                ],
-              ),
-            const SizedBox(height: 24),
+            // Quick Actions
+            Text('Quick Actions', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textColor)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(child: _actionButton(Icons.add_rounded, 'Create Tenant', AppTheme.primary, _showCreateTenantDialog)),
+                const SizedBox(width: 8),
+                Expanded(child: _actionButton(Icons.upload_file_rounded, 'Upload', AppTheme.success, _showUploadDialog)),
+                const SizedBox(width: 8),
+                Expanded(child: _actionButton(Icons.chat_bubble_rounded, 'Chat', AppTheme.info, widget.onOpenChat ?? () {})),
+              ],
+            ),
+            const SizedBox(height: 16),
 
-            Text('Recent Activity', style: TextStyle(fontSize: isNarrow ? 16 : 18, fontWeight: FontWeight.w600, color: textColor)),
-            const SizedBox(height: 12),
+            // Recent Activity
+            Text('Recent Activity', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textColor)),
+            const SizedBox(height: 8),
             Expanded(
               child: Container(
                 decoration: BoxDecoration(

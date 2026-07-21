@@ -270,38 +270,48 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildInput(Color surfaceBg, Color borderColor, Color textColor) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
       decoration: BoxDecoration(
         color: surfaceBg,
         border: Border(top: BorderSide(color: borderColor)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Expanded(
-            child: TextField(
-              controller: _messageController,
-              style: TextStyle(color: textColor, fontSize: 14),
-              maxLines: null,
-              keyboardType: TextInputType.multiline,
-              decoration: InputDecoration(
-                hintText: 'Ask a question...',
-                hintStyle: TextStyle(color: textColor.withOpacity(0.4)),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Container(
+              constraints: const BoxConstraints(maxHeight: 120),
+              decoration: BoxDecoration(
+                color: borderColor.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(20),
               ),
-              onSubmitted: (_) => _sendMessage(),
+              child: TextField(
+                controller: _messageController,
+                style: TextStyle(color: textColor, fontSize: 14),
+                maxLines: null,
+                keyboardType: TextInputType.multiline,
+                textInputAction: TextInputAction.send,
+                decoration: InputDecoration(
+                  hintText: 'Ask a question...',
+                  hintStyle: TextStyle(color: textColor.withOpacity(0.4)),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                ),
+                onSubmitted: (_) => _sendMessage(),
+              ),
             ),
           ),
           const SizedBox(width: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: AppTheme.primary,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.send, size: 18),
-              color: AppTheme.onPrimary,
-              onPressed: _isTyping ? null : _sendMessage,
+          GestureDetector(
+            onTap: _isTyping ? null : _sendMessage,
+            child: Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: _isTyping ? borderColor : AppTheme.primary,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.send_rounded, size: 18, color: _isTyping ? textColor.withOpacity(0.3) : Colors.white),
             ),
           ),
         ],
