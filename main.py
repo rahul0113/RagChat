@@ -38,6 +38,14 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Rate limiting middleware
+    app.add_middleware(
+        RateLimitMiddleware,
+        default_limit=100,  # 100 req/min for general endpoints
+        admin_limit=30,     # 30 req/min for admin endpoints
+        chat_limit=60,      # 60 req/min for chat endpoints
+    )
+
     # Routes
     app.include_router(router, prefix="/api")
 
@@ -90,7 +98,24 @@ def create_app() -> FastAPI:
             from rag.monitoring import get_health_check
             return get_health_check()
         except Exception:
-            return {"status": "healthy", "version": settings.APP_VERSION}
+            # Basic health check
+            status = {"status": "healthy", "version": settings.APP_VERSION, "checks": {}}
+            try:
+                from tenants.models import get_tenant_count
+                tenant_count = get_tenant_count()
+                status["checks"]["database"] = "ok"
+                status["checks"]["tenant_count"] = tenant_count
+            except Exception as e:
+                status["checks"]["database"] = f"error: {e}"
+            try:
+                from rag.vector_store import get_client
+                client = get_client()
+                collections = client.get_collections()
+                status["checks"]["qdrant"] = "ok"
+                status["checks"]["collections"] = len(collections.collections)
+            except Exception as e:
+                status["checks"]["qdrant"] = f"error: {e}"
+            return status
 
     @app.get("/", response_class=HTMLResponse)
     def root():

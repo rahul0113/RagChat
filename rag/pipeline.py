@@ -12,17 +12,26 @@ Supports:
 - Structured monitoring
 - Retrieval quality signals
 - Unanswered question tracking
+- Token budgeting
+- Context deduplication
+- Evaluation metrics (precision, MRR, faithfulness)
 """
 import time
 import uuid
 import logging
 from rag.embeddings import embed_texts, embed_query
 from rag.vector_store import search_similar, insert_vectors, create_tenant_collection
+from rag.hybrid_search import invalidate_bm25_cache
 from rag.llm import (
     generate_response,
     generate_structured_response,
     stream_response,
     rewrite_query,
+)
+from rag.evaluation import (
+    compute_retrieval_metrics,
+    compute_generation_metrics,
+    log_metrics,
 )
 from rag.chunker import chunk_text
 from rag.document_loader import load_document
@@ -111,6 +120,7 @@ def ingest_document(tenant_id: str, file_obj, filename: str) -> dict:
 
         insert_vectors(tenant_id, texts_to_embed, vectors, metadatas)
         vectors_stored = len(all_chunks)
+        invalidate_bm25_cache(tenant_id)
         _monitor("qdrant.insert", tenant_id, extra={"vectors_stored": vectors_stored})
     except Exception as e:
         logger.warning(f"Vector storage failed for '{filename}' (Qdrant unreachable?): {e}")
@@ -354,6 +364,14 @@ def query_rag(
         except ImportError:
             pass
 
+    # 8. Compute evaluation metrics
+    try:
+        retrieval_metrics = compute_retrieval_metrics(results, k=top_k)
+        generation_metrics = compute_generation_metrics(answer, results, question, citations if structured else None)
+    except Exception:
+        retrieval_metrics = None
+        generation_metrics = None
+
     return {
         "answer": answer,
         "sources": sources,
@@ -370,6 +388,17 @@ def query_rag(
             "fallback_reason": fallback_reason,
             "insufficient_context": insufficient_context,
             "top_score": results[0].get("score", 0) if results else 0,
+            "retrieval": {
+                "precision_at_k": retrieval_metrics.precision_at_k if retrieval_metrics else 0,
+                "mrr": retrieval_metrics.mrr if retrieval_metrics else 0,
+                "avg_score": retrieval_metrics.avg_score if retrieval_metrics else 0,
+            } if retrieval_metrics else None,
+            "generation": {
+                "faithfulness": generation_metrics.faithfulness if generation_metrics else 0,
+                "relevance": generation_metrics.relevance if generation_metrics else 0,
+                "confidence": generation_metrics.confidence if generation_metrics else "low",
+                "grounded": generation_metrics.grounded if generation_metrics else False,
+            } if generation_metrics else None,
         },
     }
 

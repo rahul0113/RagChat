@@ -38,3 +38,6 @@ httpx
 
 # Language Detection
 langdetect
+
+# Token counting
+tiktoken

@@ -1,13 +1,21 @@
 """
 FastAPI routes — tenant management, document ingestion, chat,
 website crawling, document deletion, analytics, and health checks.
+
+Security improvements:
+- Filename sanitization
+- Content validation
+- Request size limits
+- Input length validation
 """
 import io
+import re
 import json
+import hashlib
 import logging
 from fastapi import APIRouter, UploadFile, File, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from tenants.manager import (
     create_tenant, get_tenant, list_tenants, update_tenant_theme,
@@ -61,6 +69,56 @@ class CacheClearRequest(BaseModel):
 
 
 # ============================================
+# INPUT VALIDATION HELPERS
+# ============================================
+_MAX_QUERY_LENGTH = 2000
+_MAX_FILENAME_LENGTH = 255
+
+def _sanitize_filename(filename: str) -> str:
+    """Sanitize filename to prevent path traversal and injection."""
+    if not filename:
+        return "unnamed_file"
+
+    # Remove path components (prevent traversal)
+    filename = filename.split("/")[-1].split("\\")[-1]
+
+    # Remove null bytes
+    filename = filename.replace("\x00", "")
+
+    # Replace dangerous characters
+    filename = re.sub(r'[^\w\-_\. ]', '_', filename)
+
+    # Collapse multiple underscores/dots
+    filename = re.sub(r'[_]{2,}', '_', filename)
+    filename = re.sub(r'[\.]{2,}', '.', filename)
+
+    # Truncate
+    if len(filename) > _MAX_FILENAME_LENGTH:
+        name, ext = filename.rsplit('.', 1) if '.' in filename else (filename, '')
+        filename = name[:_MAX_FILENAME_LENGTH - len(ext) - 1] + '.' + ext if ext else name[:_MAX_FILENAME_LENGTH]
+
+    return filename.strip('_.')
+
+
+def _validate_query(query: str) -> str:
+    """Validate and sanitize chat query."""
+    if not query or not query.strip():
+        raise HTTPException(status_code=400, detail="Query cannot be empty")
+
+    query = query.strip()
+
+    if len(query) > _MAX_QUERY_LENGTH:
+        raise HTTPException(status_code=400, detail=f"Query too long. Max {_MAX_QUERY_LENGTH} characters")
+
+    return query
+
+
+def _compute_file_hash(data: bytes) -> str:
+    """Compute SHA-256 hash of file content for deduplication."""
+    return hashlib.sha256(data).hexdigest()
+
+
+# ============================================
 # PUBLIC: Chat endpoints (used by widget)
 # ============================================
 @router.post("/chat/{slug}")
@@ -73,11 +131,14 @@ async def chat(slug: str, request: ChatRequest):
     if not tenant.is_active:
         raise HTTPException(status_code=403, detail="This chat is currently disabled")
 
+    # Validate query
+    query = _validate_query(request.query)
+
     increment_queries(tenant.id)
 
     result = query_rag(
         tenant_id=tenant.id,
-        question=request.query,
+        question=query,
         org_name=tenant.org_name,
         top_k=request.top_k,
         chat_history=request.chat_history,
@@ -210,25 +271,42 @@ async def admin_upload_document(
     if not tenant:
         raise HTTPException(status_code=404, detail="Tenant not found")
 
-    # Validate file size
+    # Read file contents
     contents = await file.read()
+
+    # Validate file size
     size_mb = len(contents) / (1024 * 1024)
     if size_mb > settings.MAX_FILE_SIZE_MB:
         raise HTTPException(status_code=413, detail=f"File too large. Max: {settings.MAX_FILE_SIZE_MB}MB")
 
+    # Validate file is not empty
+    if len(contents) == 0:
+        raise HTTPException(status_code=400, detail="File is empty")
+
+    # Validate MIME type (basic check)
+    if file.content_type and not file.content_type.startswith(('application/', 'text/', 'image/')):
+        logger.warning(f"Suspicious content type: {file.content_type} for {file.filename}")
+
+    # Sanitize filename
+    safe_filename = _sanitize_filename(file.filename)
+    original_filename = file.filename
+
+    # Compute file hash for deduplication
+    file_hash = _compute_file_hash(contents)
+
     # Validate extension
-    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+    ext = safe_filename.rsplit(".", 1)[-1].lower() if "." in safe_filename else ""
     if ext not in settings.SUPPORTED_FORMATS:
-        raise HTTPException(status_code=400, detail=f"Unsupported format: {ext}")
+        raise HTTPException(status_code=400, detail=f"Unsupported format: {ext}. Supported: {', '.join(settings.SUPPORTED_FORMATS)}")
 
     # Ingest
     file_obj = io.BytesIO(contents)
     new_doc_id = None
     try:
         # Check for existing document with same filename — replace it
-        old_doc_id = replace_document(tenant.id, file.filename, None)
+        old_doc_id = replace_document(tenant.id, safe_filename, None)
 
-        result = ingest_document(tenant.id, file_obj, file.filename)
+        result = ingest_document(tenant.id, file_obj, safe_filename)
         new_doc_id = result["document_id"]
 
         # Delete old document vectors if replacing
@@ -241,7 +319,7 @@ async def admin_upload_document(
         add_document(
             tenant_id=tenant.id,
             filename=result["filename"],
-            original_filename=file.filename,
+            original_filename=original_filename,
             file_size=len(contents),
             file_type=ext,
             chunk_count=result["chunks"],
@@ -250,7 +328,14 @@ async def admin_upload_document(
             ingestion_status="completed",
         )
 
-        return {"status": "ingested", **result}
+        return {
+            "status": "ingested",
+            "document_id": new_doc_id,
+            "filename": result["filename"],
+            "chunks": result["chunks"],
+            "characters": result["characters"],
+            "file_hash": file_hash,
+        }
     except Exception as e:
         logger.error(f"Ingestion error: {e}")
         # Mark as failed if we have a document_id

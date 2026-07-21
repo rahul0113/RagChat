@@ -39,9 +39,11 @@ class Settings(BaseSettings):
     # --- Document Ingestion ---
     UPLOAD_DIR: Path = Path("./uploads")
     MAX_FILE_SIZE_MB: int = 50
-    CHUNK_SIZE: int = 512
-    CHUNK_OVERLAP: int = 64
+    CHUNK_SIZE: int = 1024  # Increased to match BGE-large capacity (512 tokens ≈ 2048 chars)
+    CHUNK_OVERLAP: int = 100  # 10% of chunk size for better context continuity
     SUPPORTED_FORMATS: list[str] = ["pdf", "docx", "doc", "txt", "html", "htm", "csv", "md", "json"]
+    MAX_CONTEXT_TOKENS: int = 6000  # Leave room for system prompt + response
+    EMBEDDING_CACHE_ENABLED: bool = True  # Cache embeddings for deduplication
 
     # --- Tenant ---
     DEFAULT_TENANT_PLAN: str = "free"  # free | pro | enterprise
